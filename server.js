@@ -321,12 +321,17 @@ async function createMysqlTables() {
       email VARCHAR(255) NOT NULL UNIQUE,
       phone VARCHAR(50),
       role VARCHAR(50) DEFAULT 'Cliente',
-      date VARCHAR(50) NOT NULL
+      date VARCHAR(50) NOT NULL,
+      favorites TEXT
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `
 
   await mysqlPool.query(queryProducts)
   await mysqlPool.query(queryUsers)
+  try {
+    await mysqlPool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS favorites TEXT')
+  } catch (e) {
+  }
 }
 
 async function seedMysqlData() {
@@ -360,7 +365,6 @@ async function seedMysqlData() {
   }
 }
 
-// ── JSON FILE FALLBACK DATABASE IMPLEMENTATION ──
 
 function initJsonDatabase() {
   if (!fs.existsSync(DB_JSON_PATH)) {
@@ -491,27 +495,33 @@ app.get('/api/users', async (req, res) => {
   if (!useJsonFallback) {
     try {
       const [rows] = await mysqlPool.query('SELECT * FROM users ORDER BY id DESC')
-      return res.json(rows)
+      const formatted = rows.map(r => ({
+        ...r,
+        favorites: r.favorites ? JSON.parse(r.favorites) : []
+      }))
+      return res.json(formatted)
     } catch (e) {
       console.error('MySQL Fetch Users Error, falling back to JSON:', e)
     }
   }
 
   const db = loadJsonData()
-  res.json(db.users)
+  const formatted = db.users.map(u => ({ ...u, favorites: u.favorites || [] }))
+  res.json(formatted)
 })
 
 app.post('/api/users', async (req, res) => {
   const u = req.body
   const dateStr = new Date().toLocaleDateString('pt-BR')
+  const favs = u.favorites || []
 
   if (!useJsonFallback) {
     try {
       const [result] = await mysqlPool.query(
-        `INSERT INTO users (name, email, phone, role, date) VALUES (?, ?, ?, ?, ?)`,
-        [u.name, u.email, u.phone, u.role, dateStr]
+        `INSERT INTO users (name, email, phone, role, date, favorites) VALUES (?, ?, ?, ?, ?, ?)`,
+        [u.name, u.email, u.phone, u.role || 'Cliente', dateStr, JSON.stringify(favs)]
       )
-      const newUser = { id: result.insertId, ...u, date: dateStr }
+      const newUser = { id: result.insertId, ...u, date: dateStr, favorites: favs }
       return res.status(201).json(newUser)
     } catch (e) {
       console.error('MySQL Insert User Error, falling back to JSON:', e)
@@ -522,7 +532,8 @@ app.post('/api/users', async (req, res) => {
   const newUser = {
     id: db.users.length ? Math.max(...db.users.map(u => u.id)) + 1 : 1,
     ...u,
-    date: dateStr
+    date: dateStr,
+    favorites: favs
   }
   db.users.unshift(newUser)
   saveJsonData(db)
@@ -553,13 +564,26 @@ app.put('/api/users/:id', async (req, res) => {
 
   if (!useJsonFallback) {
     try {
+      const [[existing]] = await mysqlPool.query('SELECT * FROM users WHERE id=?', [id])
+      if (!existing) {
+        return res.status(404).json({ error: 'User not found' })
+      }
+
+      const name = u.name !== undefined ? u.name : existing.name
+      const email = u.email !== undefined ? u.email : existing.email
+      const phone = u.phone !== undefined ? u.phone : existing.phone
+      const favoritesVal = u.favorites !== undefined ? JSON.stringify(u.favorites) : existing.favorites
+
       await mysqlPool.query(
-        `UPDATE users SET name=?, email=?, phone=? WHERE id=?`,
-        [u.name, u.email, u.phone, id]
+        `UPDATE users SET name=?, email=?, phone=?, favorites=? WHERE id=?`,
+        [name, email, phone, favoritesVal, id]
       )
       const [[updatedUser]] = await mysqlPool.query('SELECT * FROM users WHERE id=?', [id])
       if (updatedUser) {
-        return res.json(updatedUser)
+        return res.json({
+          ...updatedUser,
+          favorites: updatedUser.favorites ? JSON.parse(updatedUser.favorites) : []
+        })
       }
     } catch (e) {
       console.error('MySQL Update User Error, falling back to JSON:', e)
@@ -571,7 +595,10 @@ app.put('/api/users/:id', async (req, res) => {
   if (index !== -1) {
     db.users[index] = { ...db.users[index], ...u, id }
     saveJsonData(db)
-    return res.json(db.users[index])
+    return res.json({
+      ...db.users[index],
+      favorites: db.users[index].favorites || []
+    })
   }
   res.status(404).json({ error: 'User not found' })
 })

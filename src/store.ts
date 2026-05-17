@@ -27,6 +27,7 @@ export interface User {
   phone: string
   role: string
   date: string
+  favorites?: number[]
 }
 
 export interface CartItem {
@@ -37,11 +38,7 @@ export interface CartItem {
   color: string
 }
 
-export const cartItems = ref<CartItem[]>([
-  { id: 1, name: 'Vestido Midi Floral', size: 'M', price: 'R$ 289,90', color: '#d4b896' },
-  { id: 2, name: 'Sandália Strappy', size: '37', price: 'R$ 199,90', color: '#c9a882' },
-  { id: 3, name: 'Bolsa Minimalista', size: 'Único', price: 'R$ 349,90', color: '#a8937a' }
-])
+export const cartItems = ref<CartItem[]>([])
 
 export function addToCart(product: any, size: string) {
   const newItem: CartItem = {

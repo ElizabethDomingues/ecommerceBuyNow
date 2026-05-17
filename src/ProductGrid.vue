@@ -242,12 +242,29 @@
         {{ toast }}
       </div>
     </transition>
+
+    <transition name="modal-fade">
+      <div v-if="showLoginWarningModal" class="warning-modal-overlay" @click.self="showLoginWarningModal = false">
+        <div class="warning-modal-card" role="dialog" aria-modal="true">
+          <div class="warning-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <h3 class="warning-title">Acesso Restrito</h3>
+          <p class="warning-subtitle">Faça login para utilizar essa opção</p>
+          <button class="warning-btn-action" @click="showLoginWarningModal = false">
+            Entendido
+          </button>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { products, SHAPES, addToCart as storeAddToCart, searchQuery } from './store'
+import { products, SHAPES, addToCart as storeAddToCart, searchQuery, currentUser, updateUser } from './store'
 
 const gridCols    = ref(3)
 const filtersOpen = ref(true)
@@ -255,8 +272,15 @@ const sortBy      = ref('relevance')
 const page        = ref(1)
 const perPage     = 9
 const hoveredId   = ref(null)
-const wishlist    = ref([])
 const toast       = ref(null)
+const showLoginWarningModal = ref(false)
+
+const wishlist = computed(() => {
+  if (currentUser.value) {
+    return currentUser.value.favorites || []
+  }
+  return []
+})
 const priceRange  = ref([0, 2000])
 const openGroups  = ref(['Categoria', 'Tamanho', 'Cor'])
 const selectedFilters = reactive({
@@ -419,9 +443,22 @@ function clearFilters() {
   page.value = 1
 }
 function toggleWishlist(id) {
-  const i = wishlist.value.indexOf(id)
-  if (i >= 0) { wishlist.value.splice(i, 1); showToast('Removido dos favoritos') }
-  else        { wishlist.value.push(id);     showToast('Adicionado aos favoritos ♥') }
+  if (!currentUser.value) {
+    showLoginWarningModal.value = true
+    return
+  }
+
+  const currentFavs = [...(currentUser.value.favorites || [])]
+  const i = currentFavs.indexOf(id)
+  if (i >= 0) {
+    currentFavs.splice(i, 1)
+    showToast('Removido dos favoritos')
+  } else {
+    currentFavs.push(id)
+    showToast('Adicionado aos favoritos ♥')
+  }
+
+  updateUser(currentUser.value.id, { favorites: currentFavs })
 }
 function addToCart(product, size) {
   storeAddToCart(product, size)
@@ -1069,5 +1106,81 @@ function showToast(msg) {
 
 .add-to-bag-btn:hover svg {
   transform: translateY(-2px);
+}
+
+.warning-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  background: rgba(26, 20, 16, 0.45);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.warning-modal-card {
+  width: 100%;
+  max-width: 380px;
+  background: #faf8f5;
+  border: 1px solid #e8e0d5;
+  border-radius: 4px;
+  box-shadow: 0 24px 64px rgba(26, 20, 16, 0.2);
+  padding: 36px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.warning-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #fdf5f2;
+  color: #c0714a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.warning-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  color: #1a1410;
+  margin-bottom: 8px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.warning-subtitle {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: #6b5543;
+  line-height: 1.5;
+  margin-bottom: 28px;
+}
+
+.warning-btn-action {
+  width: 100%;
+  background: #1a1410;
+  color: #faf8f5;
+  border: 1px solid #1a1410;
+  padding: 13px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+.warning-btn-action:hover {
+  background: transparent;
+  color: #1a1410;
 }
 </style>
