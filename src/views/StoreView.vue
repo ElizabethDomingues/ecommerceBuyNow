@@ -61,57 +61,18 @@
 
     <div class="main-layout">
 
-      <aside class="sidebar" :class="{ open: filtersOpen }">
-        <div v-for="group in filterGroups" :key="group.label" class="filter-group">
-          <button class="fg-header" @click="toggleGroup(group.label)">
-            <span>{{ group.label }}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                 :style="{ transform: openGroups.includes(group.label) ? 'rotate(180deg)' : 'rotate(0)', transition:'transform 0.3s' }">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <transition name="expand">
-            <div v-if="openGroups.includes(group.label)" class="fg-body">
-              <div v-if="group.type === 'color'" class="swatch-grid">
-                <button
-                  v-for="opt in group.options" :key="opt.value"
-                  class="swatch"
-                  :class="{ selected: selectedFilters[group.key]?.includes(opt.value) }"
-                  :style="{ background: opt.hex }"
-                  :title="opt.value"
-                  @click="toggleFilter(group.key, opt.value)"
-                ></button>
-              </div>
-              <div v-else-if="group.type === 'size'" class="size-grid">
-                <button
-                  v-for="opt in group.options" :key="opt"
-                  class="size-chip"
-                  :class="{ selected: selectedFilters[group.key]?.includes(opt) }"
-                  @click="toggleFilter(group.key, opt)"
-                >{{ opt }}</button>
-              </div>
-              <div v-else-if="group.type === 'range'" class="range-wrap">
-                <div class="range-vals">
-                  <span>R$ {{ priceRange[0] }}</span>
-                  <span>R$ {{ priceRange[1] }}</span>
-                </div>
-                <input type="range" min="0" max="2000" step="50" v-model.number="priceRange[0]" class="range-input"/>
-                <input type="range" min="0" max="2000" step="50" v-model.number="priceRange[1]" class="range-input"/>
-              </div>
-              <div v-else class="check-list">
-                <label v-for="opt in group.options" :key="opt" class="check-item">
-                  <input type="checkbox" :value="opt" v-model="selectedFilters[group.key]" class="check-input"/>
-                  <span class="check-box"></span>
-                  <span class="check-label">{{ opt }}</span>
-                </label>
-              </div>
-            </div>
-          </transition>
-        </div>
-        <button v-if="activeFiltersCount > 0" class="clear-all" @click="clearFilters">
-          Limpar todos os filtros
-        </button>
-      </aside>
+      <SidebarFilter 
+        :filters-open="filtersOpen"
+        :filter-groups="filterGroups"
+        :open-groups="openGroups"
+        :selected-filters="selectedFilters"
+        :price-range="priceRange"
+        :active-filters-count="activeFiltersCount"
+        @toggle-group="toggleGroup"
+        @toggle-filter="toggleFilter"
+        @clear-filters="clearFilters"
+        @update:price-range="priceRange = $event"
+      />
 
       <div class="grid-area">
         <transition name="fade">
@@ -127,82 +88,16 @@
         </transition>
 
         <div class="product-grid" :class="`cols-${gridCols}`">
-          <article
+          <ProductCard
             v-for="(product, i) in paginatedProducts"
             :key="product.id"
-            class="product-card"
-            :style="{ animationDelay: `${i * 60}ms` }"
-            @mouseenter="hoveredId = product.id"
-            @mouseleave="hoveredId = null"
-          >
-            <span v-if="product.badge" class="prod-badge" :class="product.badge.type">{{ product.badge.label }}</span>
-
-            <div class="prod-img-wrap">
-              <div class="prod-img" :style="{ background: product.color }">
-                <div class="prod-img-inner" :style="{ background: product.color2 }"></div>
-                <img v-if="product.image" :src="product.image" class="prod-cover-img" />
-                <svg v-else class="prod-silhouette" viewBox="0 0 120 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path :d="product.shape" :fill="product.shapeColor" opacity="0.55"/>
-                </svg>
-              </div>
-              <div class="prod-actions" :class="{ visible: hoveredId === product.id }">
-                <button class="prod-action-btn" @click="toggleWishlist(product.id)" :class="{ wishlisted: wishlist.includes(product.id) }">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                  </svg>
-                </button>
-                <button class="prod-action-btn" title="Ver rapidamente">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="quick-add" :class="{ visible: hoveredId === product.id }">
-                <button
-                  v-for="sz in product.sizes.slice(0,4)"
-                  :key="sz"
-                  class="qa-size"
-                  @click.stop="addToCart(product, sz)"
-                >{{ sz }}</button>
-                <span v-if="product.sizes.length > 4" class="qa-more">+{{ product.sizes.length - 4 }}</span>
-              </div>
-            </div>
-            <div class="prod-info">
-              <div class="prod-top">
-                <p class="prod-brand">{{ product.brand }}</p>
-                <div class="prod-rating">
-                  <span class="stars">{{ '★'.repeat(Math.floor(product.rating)) }}{{ product.rating % 1 ? '½' : '' }}</span>
-                  <span class="rating-count">({{ product.reviews }})</span>
-                </div>
-              </div>
-              <h3 class="prod-name">{{ product.name }}</h3>
-              <div class="prod-colors">
-                <span
-                  v-for="c in product.colorOptions"
-                  :key="c"
-                  class="color-dot"
-                  :style="{ background: c }"
-                ></span>
-                <span v-if="product.colorOptions.length > 4" class="color-more">+{{ product.colorOptions.length - 4 }}</span>
-              </div>
-              <div class="prod-price-row">
-                <div class="prod-prices">
-                  <span v-if="product.originalPrice" class="price-original">{{ product.originalPrice }}</span>
-                  <span class="price-current" :class="{ sale: product.originalPrice }">{{ product.price }}</span>
-                </div>
-                <span v-if="product.installments" class="price-installments">{{ product.installments }}</span>
-              </div>
-              
-              <button class="add-to-bag-btn" @click.stop="quickAddToCart(product)">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                  <line x1="3" y1="6" x2="21" y2="6"/>
-                  <path d="M16 10a4 4 0 0 1-8 0"/>
-                </svg>
-                Adicionar à Sacola
-              </button>
-            </div>
-          </article>
+            :product="product"
+            :delay="`${i * 60}ms`"
+            :wishlist="wishlist"
+            @toggle-wishlist="toggleWishlist"
+            @add-to-cart="addToCart"
+            @quick-add-to-cart="quickAddToCart"
+          />
         </div>
 
         <div v-if="filteredProducts.length === 0" class="empty-state">
@@ -236,18 +131,7 @@
     </div>
 
     <!-- PREMIUM FOOTER -->
-    <footer class="store-footer">
-      <div class="footer-brand">
-        <span class="logo-icon">◈</span> AURÊ
-      </div>
-      <p class="footer-copy">© 2026 AURÊ. Todos os direitos reservados. Design minimalista de luxo.</p>
-      <div class="footer-links">
-        <a href="#/">Coleção</a>
-        <a href="#/">Sobre nós</a>
-        <a href="#/">Termos de Uso</a>
-        <a href="#/admin" class="admin-portal-link">Painel do Administrador →</a>
-      </div>
-    </footer>
+    <StoreFooter />
 
     <transition name="toast">
       <div v-if="toast" class="toast">
@@ -279,7 +163,10 @@
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { products, SHAPES, addToCart as storeAddToCart, searchQuery, currentUser, updateUser, showOnlyFavorites } from './store'
+import StoreFooter from '../components/Store/StoreFooter.vue'
+import SidebarFilter from '../components/Store/SidebarFilter.vue'
+import ProductCard from '../components/Store/ProductCard.vue'
+import { products, SHAPES, addToCart as storeAddToCart, searchQuery, currentUser, updateUser, showOnlyFavorites } from '../store'
 
 const gridCols    = ref(3)
 const filtersOpen = ref(true)
@@ -652,127 +539,6 @@ function showToast(msg) {
   margin: 0 auto;
 }
 
-.sidebar {
-  width: 240px;
-  flex-shrink: 0;
-  padding: 32px 32px 32px 0;
-  border-right: 1px solid #e8e0d5;
-  position: sticky;
-  top: 57px;
-  max-height: calc(100vh - 57px);
-  overflow-y: auto;
-  transition: width 0.35s, opacity 0.35s;
-}
-.sidebar:not(.open) {
-  width: 0;
-  opacity: 0;
-  overflow: hidden;
-  padding: 0;
-}
-
-.filter-group { border-bottom: 1px solid #e8e0d5; padding: 16px 0; }
-.fg-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  background: none;
-  border: none;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #1a1410;
-  cursor: pointer;
-  padding: 4px 0;
-}
-.fg-body { padding-top: 14px; }
-
-.swatch-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-.swatch {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s;
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-}
-.swatch:hover { transform: scale(1.15); }
-.swatch.selected { outline-color: #8b6f47; }
-
-.size-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-.size-chip {
-  min-width: 36px;
-  padding: 5px 8px;
-  background: #f0ece6;
-  border: 1px solid #e0d5c8;
-  border-radius: 2px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  color: #3d2f1e;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: center;
-}
-.size-chip:hover { border-color: #8b6f47; color: #8b6f47; }
-.size-chip.selected { background: #1a1410; color: #faf8f5; border-color: #1a1410; }
-
-.range-wrap { display: flex; flex-direction: column; gap: 8px; }
-.range-vals { display: flex; justify-content: space-between; font-size: 12px; color: #6b5543; }
-.range-input {
-  width: 100%;
-  accent-color: #8b6f47;
-  height: 2px;
-}
-
-.check-list { display: flex; flex-direction: column; gap: 10px; }
-.check-item { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-.check-input { display: none; }
-.check-box {
-  width: 16px;
-  height: 16px;
-  border: 1px solid #c0b0a0;
-  border-radius: 2px;
-  flex-shrink: 0;
-  position: relative;
-  transition: all 0.2s;
-}
-.check-input:checked + .check-box {
-  background: #1a1410;
-  border-color: #1a1410;
-}
-.check-input:checked + .check-box::after {
-  content: '';
-  position: absolute;
-  inset: 3px 2px 2px 4px;
-  border-left: 1.5px solid #faf8f5;
-  border-bottom: 1.5px solid #faf8f5;
-  transform: rotate(-45deg);
-}
-.check-label { font-size: 13px; color: #3d2f1e; }
-.check-item:hover .check-label { color: #8b6f47; }
-
-.clear-all {
-  margin-top: 20px;
-  background: none;
-  border: 1px solid #e0d5c8;
-  width: 100%;
-  padding: 10px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #a89880;
-  cursor: pointer;
-  border-radius: 2px;
-  transition: all 0.2s;
-}
-.clear-all:hover { border-color: #8b6f47; color: #8b6f47; }
-
 .grid-area { flex: 1; padding: 32px 0 32px 40px; min-width: 0; }
 .product-grid {
   display: grid;
@@ -780,191 +546,6 @@ function showToast(msg) {
 }
 .product-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
 .product-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
-
-.product-card {
-  position: relative;
-  cursor: pointer;
-  animation: fadeUp 0.45s ease both;
-}
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(18px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.prod-badge {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 10;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: 1px;
-}
-.prod-badge.new       { background: #1a1410; color: #d4b896; }
-.prod-badge.sale      { background: #c0714a; color: #fff; }
-.prod-badge.exclusive { background: #8b6f47; color: #faf8f5; }
-.prod-badge.best      { background: #5a7a5a; color: #fff; }
-
-.prod-img-wrap {
-  position: relative;
-  aspect-ratio: 3/4;
-  overflow: hidden;
-  border-radius: 2px;
-  background: #e8e0d5;
-}
-.prod-img {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
-  position: relative;
-}
-.product-card:hover .prod-img { transform: scale(1.04); }
-.prod-img-inner {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 0.4s;
-}
-.product-card:hover .prod-img-inner { opacity: 0.3; }
-.prod-silhouette {
-  width: 55%;
-  height: 80%;
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.15));
-}
-.prod-cover-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 1;
-}
-
-.prod-actions {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  opacity: 0;
-  transform: translateX(8px);
-  transition: all 0.25s;
-}
-.prod-actions.visible { opacity: 1; transform: translateX(0); }
-.prod-action-btn {
-  width: 36px;
-  height: 36px;
-  background: #faf8f5;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #3d2f1e;
-  box-shadow: 0 2px 12px rgba(26,20,16,0.12);
-  transition: all 0.2s;
-}
-.prod-action-btn:hover { background: #1a1410; color: #faf8f5; }
-.prod-action-btn.wishlisted { background: #c0714a; color: #fff; }
-
-.quick-add {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(26,20,16,0.88);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px;
-  transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
-}
-.quick-add.visible { transform: translateY(0); }
-.qa-size {
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.25);
-  color: #faf8f5;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 10px;
-  font-weight: 500;
-  padding: 5px 8px;
-  border-radius: 2px;
-  cursor: pointer;
-  letter-spacing: 0.08em;
-  transition: all 0.15s;
-}
-.qa-size:hover { background: #8b6f47; border-color: #8b6f47; }
-.qa-more { font-size: 10px; color: #a89880; }
-
-/* ── PRODUCT INFO ── */
-.prod-info { padding: 16px 0 4px; }
-.prod-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-.prod-brand {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: #8b6f47;
-}
-.prod-rating { display: flex; align-items: center; gap: 4px; }
-.stars { font-size: 10px; color: #c0914a; letter-spacing: -1px; }
-.rating-count { font-size: 10px; color: #a89880; }
-.prod-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 16px;
-  font-weight: 500;
-  color: #1a1410;
-  line-height: 1.3;
-  margin-bottom: 8px;
-}
-.prod-colors { display: flex; align-items: center; gap: 5px; margin-bottom: 10px; }
-.color-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255,255,255,0.6);
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.12);
-}
-.color-more { font-size: 10px; color: #a89880; }
-.prod-price-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-.prod-prices { display: flex; align-items: baseline; gap: 7px; }
-.price-original {
-  font-size: 12px;
-  color: #a89880;
-  text-decoration: line-through;
-}
-.price-current {
-  font-size: 16px;
-  font-weight: 500;
-  color: #1a1410;
-}
-.price-current.sale { color: #c0714a; }
-.price-installments { font-size: 11px; color: #8b6f47; }
 
 .empty-state {
   text-align: center;
@@ -1031,10 +612,6 @@ function showToast(msg) {
 .toast-enter-active, .toast-leave-active { transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94); }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(12px); }
 
-.expand-enter-active, .expand-leave-active { transition: all 0.28s ease; overflow: hidden; }
-.expand-enter-from, .expand-leave-to { opacity: 0; max-height: 0; }
-.expand-enter-to, .expand-leave-from { opacity: 1; max-height: 300px; }
-
 @media (max-width: 1024px) {
   .product-grid.cols-3 { grid-template-columns: repeat(2, 1fr); }
   .main-layout { padding: 0 24px; }
@@ -1051,89 +628,6 @@ function showToast(msg) {
   .sort-label { display: none; }
   .hero { padding: 28px 16px 20px; flex-direction: column; align-items: flex-start; gap: 12px; }
   .hero-title { font-size: 32px; }
-}
-
-/* PREMIUM STORE FOOTER */
-.store-footer {
-  border-top: 1px solid #e8e0d5;
-  padding: 64px 48px;
-  background: #faf8f5;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  margin-top: 80px;
-  width: 100%;
-}
-.footer-brand {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 24px;
-  letter-spacing: 0.2em;
-  color: #1a1410;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.footer-copy {
-  font-size: 12px;
-  color: #a89880;
-  text-align: center;
-}
-.footer-links {
-  display: flex;
-  gap: 24px;
-  font-size: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.footer-links a {
-  text-decoration: none;
-  color: #6b5543;
-  transition: color 0.2s;
-}
-.footer-links a:hover {
-  color: #1a1410;
-}
-.admin-portal-link {
-  color: #8b6f47 !important;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-}
-
-.add-to-bag-btn {
-  width: 100%;
-  margin-top: 14px;
-  background: #1a1410;
-  color: #faf8f5;
-  border: 1px solid #1a1410;
-  padding: 10px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  border-radius: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0.95;
-}
-
-.add-to-bag-btn:hover {
-  background: transparent;
-  color: #1a1410;
-  opacity: 1;
-}
-
-.add-to-bag-btn svg {
-  transition: transform 0.3s;
-}
-
-.add-to-bag-btn:hover svg {
-  transform: translateY(-2px);
 }
 
 .warning-modal-overlay {

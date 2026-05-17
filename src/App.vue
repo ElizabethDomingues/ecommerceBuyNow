@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { currentRoute } from './store';
+import { currentRoute } from './store/index';
 
 // @ts-ignore: Vue SFC type declaration is not available in current setup
-import Navbar from './Components/Navbar.vue';
+import Navbar from './components/Store/Navbar.vue';
 
 // @ts-ignore: Vue SFC type declaration is not available in current setup
-import ProductGrid from './ProductGrid.vue';
+import StoreView from './views/StoreView.vue';
 
 // @ts-ignore: Vue SFC type declaration is not available in current setup
-import AdminView from './Components/AdminView.vue';
+import AdminView from './views/AdminView.vue';
 </script>
 
 <template>
@@ -18,7 +18,7 @@ import AdminView from './Components/AdminView.vue';
     </template>
     <template v-else>
       <Navbar />
-      <ProductGrid />
+      <StoreView />
     </template>
   </div>
 </template>

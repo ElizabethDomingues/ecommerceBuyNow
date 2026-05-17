@@ -219,9 +219,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import AuthModal from './AuthModal.vue'
-import ProfileModal from './ProfileModal.vue'
-import { currentUser, cartItems, removeFromCart, clearCart, searchQuery, showOnlyFavorites } from '../store'
+import AuthModal from '../Shared/AuthModal.vue'
+import ProfileModal from '../Shared/ProfileModal.vue'
+import { currentUser, cartItems, removeFromCart, clearCart, searchQuery, showOnlyFavorites } from '../../store'
 
 function handleFavoritesClick() {
   if (!currentUser.value) {

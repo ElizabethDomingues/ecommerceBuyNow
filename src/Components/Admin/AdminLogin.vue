@@ -100,7 +100,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { loginAdmin, navigateTo } from '../store'
+import { loginAdmin, navigateTo } from '../../store'
 
 const email = ref('')
 const password = ref('')

@@ -104,7 +104,7 @@
 
 <script setup>
 import { ref, reactive, watch } from 'vue'
-import { currentUser, updateUser } from '../store'
+import { currentUser, updateUser } from '../../store'
 
 const props = defineProps({
   show: {

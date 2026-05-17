@@ -228,7 +228,7 @@
 
 <script setup>
 import { ref, reactive, watch, onMounted, onUnmounted } from 'vue'
-import { addUser, currentUser, users } from '../store'
+import { addUser, currentUser, users } from '../../store'
 
 const props = defineProps({
   show: {
