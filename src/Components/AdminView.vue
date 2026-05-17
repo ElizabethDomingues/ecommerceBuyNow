@@ -762,21 +762,29 @@ async function saveProduct() {
   }
 
   if (editingProduct.value) {
-    await updateProduct(editingProduct.value.id, productPayload)
-    showToast('Produto atualizado com sucesso!')
-    activityLogs.value.unshift({
-      text: `Elizabeth D. atualizou o produto: ${productPayload.name}`,
-      time: 'Agora',
-      type: 'info'
-    })
+    const result = await updateProduct(editingProduct.value.id, productPayload)
+    if (result) {
+      showToast('Produto atualizado com sucesso!')
+      activityLogs.value.unshift({
+        text: `Elizabeth D. atualizou o produto: ${productPayload.name}`,
+        time: 'Agora',
+        type: 'info'
+      })
+    } else {
+      showToast('Erro ao atualizar o produto no servidor.')
+    }
   } else {
-    await addProduct(productPayload)
-    showToast('Produto adicionado ao catálogo!')
-    activityLogs.value.unshift({
-      text: `Elizabeth D. cadastrou novo produto: ${productPayload.name}`,
-      time: 'Agora',
-      type: 'success'
-    })
+    const result = await addProduct(productPayload)
+    if (result) {
+      showToast('Produto adicionado ao catálogo!')
+      activityLogs.value.unshift({
+        text: `Elizabeth D. cadastrou novo produto: ${productPayload.name}`,
+        time: 'Agora',
+        type: 'success'
+      })
+    } else {
+      showToast('Erro ao adicionar o produto no servidor.')
+    }
   }
 
   formLoading.value = false

@@ -13,7 +13,8 @@ const PORT = 3000
 const DB_JSON_PATH = path.join(__dirname, 'src', 'database.json')
 
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ limit: '50mb', extended: true }))
 
 
 const SHAPES = {
@@ -332,19 +333,19 @@ async function createMysqlTables() {
   await mysqlPool.query(queryProducts)
   await mysqlPool.query(queryUsers)
   try {
-    await mysqlPool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS favorites TEXT')
+    await mysqlPool.query('ALTER TABLE users ADD COLUMN favorites TEXT')
   } catch (e) {
   }
   try {
-    await mysqlPool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT NULL')
+    await mysqlPool.query('ALTER TABLE users ADD COLUMN password VARCHAR(255) DEFAULT NULL')
   } catch (e) {
   }
   try {
-    await mysqlPool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Ativo'")
+    await mysqlPool.query("ALTER TABLE users ADD COLUMN status VARCHAR(50) DEFAULT 'Ativo'")
   } catch (e) {
   }
   try {
-    await mysqlPool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image LONGTEXT')
+    await mysqlPool.query('ALTER TABLE products ADD COLUMN image LONGTEXT')
   } catch (e) {
   }
 }
@@ -465,8 +466,8 @@ app.post('/api/products', async (req, res) => {
         [
           p.name, p.brand, p.price, p.originalPrice, p.installments, p.color, p.color2, p.shape, p.shapeColor,
           p.badge ? JSON.stringify(p.badge) : null,
-          JSON.stringify(p.sizes),
-          JSON.stringify(p.colorOptions),
+          JSON.stringify(p.sizes || []),
+          JSON.stringify(p.colorOptions || []),
           p.rating || 5.0, p.reviews || 1, p.categoria, p.marca,
           p.image || null
         ]
@@ -500,8 +501,8 @@ app.put('/api/products/:id', async (req, res) => {
         [
           p.name, p.brand, p.price, p.originalPrice, p.installments, p.color, p.color2, p.shape, p.shapeColor,
           p.badge ? JSON.stringify(p.badge) : null,
-          JSON.stringify(p.sizes),
-          JSON.stringify(p.colorOptions),
+          JSON.stringify(p.sizes || []),
+          JSON.stringify(p.colorOptions || []),
           p.categoria, p.marca,
           p.image || null,
           id
