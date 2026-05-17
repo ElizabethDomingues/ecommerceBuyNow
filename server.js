@@ -13,23 +13,20 @@ const __dirname = path.dirname(__filename)
 const app = express()
 const PORT = 3000
 
-const ALLOWED_ORIGINS = [
-  process.env.FRONTEND_URL,        // URL do Netlify (definida no painel do Render)
-  'http://localhost:5173',          // Vite dev server
-  'http://localhost:4173',          // Vite preview
-].filter(Boolean)
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // Permite requests sem origin (ex: Postman, curl) e origins permitidas
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-      callback(null, true)
-    } else {
-      callback(new Error(`CORS bloqueado para origin: ${origin}`))
-    }
-  },
+const corsOptions = {
+  origin: [
+    'https://ecommerceaure.netlify.app',   // produção no Netlify
+    process.env.FRONTEND_URL,              // variável do painel do Render (fallback)
+    'http://localhost:5173',               // Vite dev server
+    'http://localhost:4173',               // Vite preview
+    'http://localhost:3000',               // local
+  ].filter(Boolean),
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-}))
+}
+
+app.use(cors(corsOptions))
 app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ limit: '50mb', extended: true }))
 
