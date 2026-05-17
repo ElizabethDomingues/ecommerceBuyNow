@@ -24,9 +24,9 @@ const SHAPES = {
 }
 
 const defaultUsers = [
-  { name: 'Elizabeth Domingues', email: 'eliza@example.com', phone: '(11) 99999-9999', role: 'Administrador', date: '17/05/2026' },
-  { name: 'Ana Silva', email: 'ana@example.com', phone: '(11) 98888-8888', role: 'Cliente', date: '16/05/2026' },
-  { name: 'Carlos Santos', email: 'carlos@example.com', phone: '(21) 97777-7777', role: 'Cliente', date: '15/05/2026' }
+  { name: 'Elizabeth Domingues', email: 'eliza@example.com', phone: '(11) 99999-9999', role: 'Administrador', date: '17/05/2026', password: 'admin' },
+  { name: 'Ana Silva', email: 'ana@example.com', phone: '(11) 98888-8888', role: 'Cliente', date: '16/05/2026', password: null },
+  { name: 'Carlos Santos', email: 'carlos@example.com', phone: '(21) 97777-7777', role: 'Cliente', date: '15/05/2026', password: null }
 ]
 
 const defaultProducts = [
@@ -322,6 +322,7 @@ async function createMysqlTables() {
       phone VARCHAR(50),
       role VARCHAR(50) DEFAULT 'Cliente',
       date VARCHAR(50) NOT NULL,
+      password VARCHAR(255) DEFAULT NULL,
       favorites TEXT
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `
@@ -330,6 +331,10 @@ async function createMysqlTables() {
   await mysqlPool.query(queryUsers)
   try {
     await mysqlPool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS favorites TEXT')
+  } catch (e) {
+  }
+  try {
+    await mysqlPool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT NULL')
   } catch (e) {
   }
 }
@@ -358,9 +363,19 @@ async function seedMysqlData() {
     console.log('🌱 Populando tabela "users" com administradores padrão no MySQL...')
     for (const u of defaultUsers) {
       await mysqlPool.query(
-        `INSERT INTO users (name, email, phone, role, date) VALUES (?, ?, ?, ?, ?)`,
-        [u.name, u.email, u.phone, u.role, u.date]
+        `INSERT INTO users (name, email, phone, role, date, password) VALUES (?, ?, ?, ?, ?, ?)`,
+        [u.name, u.email, u.phone, u.role, u.date, u.password || null]
       )
+    }
+  } else {
+    // Migração MySQL: Garante que a conta eliza@example.com tenha senha 'admin' se estiver vazia
+    try {
+      await mysqlPool.query(
+        `UPDATE users SET password = ? WHERE email = ? AND (password IS NULL OR password = '')`,
+        ['admin', 'eliza@example.com']
+      )
+    } catch (err) {
+      console.error('Falha ao migrar senha do admin no MySQL:', err)
     }
   }
 }
@@ -370,6 +385,25 @@ function initJsonDatabase() {
   if (!fs.existsSync(DB_JSON_PATH)) {
     const seededData = { products: defaultProducts.map((p, i) => ({ id: i + 1, ...p })), users: defaultUsers.map((u, i) => ({ id: i + 1, ...u })) }
     fs.writeFileSync(DB_JSON_PATH, JSON.stringify(seededData, null, 2), 'utf-8')
+  } else {
+    // Migração JSON: Garante que o administrador padrão eliza@example.com tenha senha no JSON
+    try {
+      const data = loadJsonData()
+      let updated = false
+      data.users = data.users.map(u => {
+        if (u.email === 'eliza@example.com' && !u.password) {
+          u.password = 'admin'
+          updated = true
+        }
+        return u
+      })
+      if (updated) {
+        saveJsonData(data)
+        console.log('✔ Migração JSON: Senha adicionada para eliza@example.com')
+      }
+    } catch (err) {
+      console.error('Falha ao migrar JSON database:', err)
+    }
   }
 }
 
@@ -490,6 +524,71 @@ app.delete('/api/products/:id', async (req, res) => {
 })
 
 // 2. Users API Endpoints
+
+app.post('/api/admin/login', async (req, res) => {
+  const { email, password } = req.body
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'E-mail e senha são obrigatórios.' })
+  }
+
+  const normalizedEmail = email.toLowerCase().trim()
+
+  if (!useJsonFallback) {
+    try {
+      const [[user]] = await mysqlPool.query(
+        'SELECT * FROM users WHERE LOWER(email) = ?',
+        [normalizedEmail]
+      )
+
+      if (!user) {
+        return res.status(401).json({ error: 'Credenciais inválidas ou usuário não cadastrado.' })
+      }
+
+      if (user.role !== 'Administrador') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem acessar o painel.' })
+      }
+
+      const correctPassword = user.password || 'admin'
+      if (password !== correctPassword) {
+        return res.status(401).json({ error: 'Senha incorreta.' })
+      }
+
+      const formattedUser = {
+        ...user,
+        favorites: user.favorites ? JSON.parse(user.favorites) : []
+      }
+      delete formattedUser.password
+      return res.json(formattedUser)
+    } catch (e) {
+      console.error('MySQL Admin Login Error, falling back to JSON:', e)
+    }
+  }
+
+  // Fallback JSON
+  const db = loadJsonData()
+  const user = db.users.find(u => u.email.toLowerCase() === normalizedEmail)
+
+  if (!user) {
+    return res.status(401).json({ error: 'Credenciais inválidas ou usuário não cadastrado.' })
+  }
+
+  if (user.role !== 'Administrador') {
+    return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem acessar o painel.' })
+  }
+
+  const correctPassword = user.password || 'admin'
+  if (password !== correctPassword) {
+    return res.status(401).json({ error: 'Senha incorreta.' })
+  }
+
+  const formattedUser = {
+    ...user,
+    favorites: user.favorites || []
+  }
+  delete formattedUser.password
+  res.json(formattedUser)
+})
 
 app.get('/api/users', async (req, res) => {
   if (!useJsonFallback) {

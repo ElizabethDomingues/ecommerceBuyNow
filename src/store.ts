@@ -81,7 +81,45 @@ export const SHAPES = {
 // ── REACTIVE STATES BACKED BY FULLSTACK API ──
 export const products = ref<Product[]>([])
 export const users = ref<User[]>([])
-export const currentUser = ref<User | null>(null)
+const getStoredUser = (): User | null => {
+  try {
+    const saved = localStorage.getItem('aure_admin_user')
+    return saved ? JSON.parse(saved) : null
+  } catch (e) {
+    return null
+  }
+}
+
+export const currentUser = ref<User | null>(getStoredUser())
+
+export async function loginAdmin(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    })
+    
+    if (res.ok) {
+      const user = await res.json()
+      currentUser.value = user
+      localStorage.setItem('aure_admin_user', JSON.stringify(user))
+      return { success: true }
+    } else {
+      const errData = await res.json()
+      return { success: false, error: errData.error || 'Credenciais inválidas.' }
+    }
+  } catch (error) {
+    console.error('Erro na requisição de login do administrador:', error)
+    return { success: false, error: 'Erro de conexão com o servidor.' }
+  }
+}
+
+export function logoutAdmin() {
+  currentUser.value = null
+  localStorage.removeItem('aure_admin_user')
+  navigateTo('#/')
+}
 
 // ── API CRUD OPERATIONS ──
 

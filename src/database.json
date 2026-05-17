@@ -396,7 +396,8 @@
       "email": "eliza@example.com",
       "phone": "(11) 98765-4321",
       "role": "Administrador",
-      "date": "17/05/2026"
+      "date": "17/05/2026",
+      "password": "admin"
     },
     {
       "id": 2,

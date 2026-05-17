@@ -1,5 +1,6 @@
 <template>
-  <div class="admin-root">
+  <AdminLogin v-if="!currentUser || currentUser.role !== 'Administrador'" />
+  <div v-else class="admin-root">
     
     <!-- SIDEBAR -->
     <aside class="admin-sidebar">
@@ -44,14 +45,24 @@
         <div class="header-left">
           <h1 class="page-title">{{ tabs.find(t => t.id === activeTab)?.label }}</h1>
         </div>
-        <div class="header-right">
+        <div class="header-right" style="display: flex; align-items: center; gap: 20px;">
           <div class="admin-user-profile">
-            <div class="profile-avatar">E</div>
+            <div class="profile-avatar">
+              {{ currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'E' }}
+            </div>
             <div class="profile-info">
-              <p class="profile-name">Elizabeth D.</p>
-              <p class="profile-role">Administradora</p>
+              <p class="profile-name">{{ currentUser?.name || 'Elizabeth D.' }}</p>
+              <p class="profile-role">{{ currentUser?.role === 'Administrador' ? 'Administradora' : currentUser?.role || 'Administradora' }}</p>
             </div>
           </div>
+          <button class="logout-admin-btn" @click="handleLogout" title="Sair do Painel">
+            <svg class="logout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Sair
+          </button>
         </div>
       </header>
 
@@ -493,7 +504,12 @@
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { products, users, SHAPES, navigateTo, addProduct, updateProduct, deleteProduct, addUser, deleteUser } from '../store'
+import { products, users, SHAPES, navigateTo, addProduct, updateProduct, deleteProduct, addUser, deleteUser, currentUser, logoutAdmin } from '../store'
+import AdminLogin from './AdminLogin.vue'
+
+function handleLogout() {
+  logoutAdmin()
+}
 
 const activeTab = ref('overview')
 const productSearch = ref('')
@@ -1817,5 +1833,38 @@ function goHome() {
   .admin-panel-content {
     padding: 24px 16px;
   }
+}
+
+.logout-admin-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: #a89880;
+  border: 1px solid rgba(168, 152, 128, 0.2);
+  padding: 8px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.25s ease;
+}
+
+.logout-admin-btn:hover {
+  color: #faf8f5;
+  border-color: #8b6f47;
+  background: rgba(139, 111, 71, 0.1);
+  box-shadow: 0 4px 12px rgba(139, 111, 71, 0.08);
+}
+
+.logout-icon {
+  transition: transform 0.2s ease;
+}
+
+.logout-admin-btn:hover .logout-icon {
+  transform: translateX(2px);
 }
 </style>
