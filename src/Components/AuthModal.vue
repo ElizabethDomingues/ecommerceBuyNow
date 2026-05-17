@@ -228,6 +228,7 @@
 
 <script setup>
 import { ref, reactive, watch, onMounted, onUnmounted } from 'vue'
+import { addUser } from '../store'
 
 const props = defineProps({
   show: {
@@ -309,7 +310,7 @@ function formatPhone(e) {
   formData.phone = e.target.value
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   errorMsg.value = ''
 
   if (activeTab.value === 'register') {
@@ -333,15 +334,27 @@ function handleSubmit() {
 
   loading.value = true
   
-  setTimeout(() => {
+  try {
+    if (activeTab.value === 'register') {
+      await addUser({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || '',
+        role: 'Cliente'
+      })
+    }
+    
     loading.value = false
     successState.value = true
     
     setTimeout(() => {
       handleClose()
     }, 2800)
-
-  }, 1500)
+  } catch (err) {
+    console.error(err)
+    errorMsg.value = 'Ocorreu um erro ao salvar seu registro no banco de dados.'
+    loading.value = false
+  }
 }
 
 function handleForgotPassword() {

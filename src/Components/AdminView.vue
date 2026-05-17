@@ -493,7 +493,7 @@
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { products, users, SHAPES, navigateTo } from '../store'
+import { products, users, SHAPES, navigateTo, addProduct, updateProduct, deleteProduct, addUser, deleteUser } from '../store'
 
 const activeTab = ref('overview')
 const productSearch = ref('')
@@ -611,106 +611,86 @@ function closeProductDrawer() {
   editingProduct.value = null
 }
 
-function saveProduct() {
+async function saveProduct() {
   formLoading.value = true
+  
+  const formattedPrice = `R$ ${parseFloat(productForm.price.replace(',', '.')).toFixed(2).replace('.', ',')}`
+  const formattedOriginalPrice = productForm.originalPrice 
+    ? `R$ ${parseFloat(productForm.originalPrice.replace(',', '.')).toFixed(2).replace('.', ',')}`
+    : null
 
-  setTimeout(() => {
-    formLoading.value = false
-    
-    const formattedPrice = `R$ ${parseFloat(productForm.price.replace(',', '.')).toFixed(2).replace('.', ',')}`
-    const formattedOriginalPrice = productForm.originalPrice 
-      ? `R$ ${parseFloat(productForm.originalPrice.replace(',', '.')).toFixed(2).replace('.', ',')}`
-      : null
+  const priceVal = parseFloat(productForm.price.replace(',', '.'))
+  const installments = `10x R$ ${(priceVal / 10).toFixed(2).replace('.', ',')}`
 
-    const priceVal = parseFloat(productForm.price.replace(',', '.'))
-    const installments = `10x R$ ${(priceVal / 10).toFixed(2).replace('.', ',')}`
+  const badge = productForm.badgeLabel 
+    ? { label: productForm.badgeLabel, type: productForm.badgeType } 
+    : null
 
-    const badge = productForm.badgeLabel 
-      ? { label: productForm.badgeLabel, type: productForm.badgeType } 
-      : null
+  const productPayload = {
+    name: productForm.name,
+    brand: productForm.brand,
+    categoria: productForm.categoria,
+    price: formattedPrice,
+    originalPrice: formattedOriginalPrice,
+    installments,
+    shape: SHAPES[productForm.shape],
+    shapeColor: productForm.shapeColor,
+    color: productForm.color,
+    color2: productForm.color2,
+    badge,
+    sizes: [...productForm.sizes],
+    colorOptions: [productForm.color, productForm.color2, '#1a1410'],
+    rating: editingProduct.value ? editingProduct.value.rating : 5.0,
+    reviews: editingProduct.value ? editingProduct.value.reviews : 1,
+    marca: productForm.brand
+  }
 
-    const productPayload = {
-      name: productForm.name,
-      brand: productForm.brand,
-      categoria: productForm.categoria,
-      price: formattedPrice,
-      originalPrice: formattedOriginalPrice,
-      installments,
-      shape: SHAPES[productForm.shape],
-      shapeColor: productForm.shapeColor,
-      color: productForm.color,
-      color2: productForm.color2,
-      badge,
-      sizes: [...productForm.sizes],
-      colorOptions: [productForm.color, productForm.color2, '#1a1410'],
-      rating: editingProduct.value ? editingProduct.value.rating : 5.0,
-      reviews: editingProduct.value ? editingProduct.value.reviews : 1
-    }
-
-    if (editingProduct.value) {
-      // Edit mode
-      const index = products.value.findIndex(p => p.id === editingProduct.value.id)
-      if (index >= 0) {
-        products.value[index] = { 
-          ...products.value[index], 
-          ...productPayload 
-        }
-        showToast('Produto atualizado com sucesso!')
-        
-        // Log activity
-        activityLogs.value.unshift({
-          text: `Elizabeth D. atualizou o produto: ${productPayload.name}`,
-          time: 'Agora',
-          type: 'info'
-        })
-      }
-    } else {
-      // Create mode
-      const newProduct = {
-        id: products.value.length ? Math.max(...products.value.map(p => p.id)) + 1 : 1,
-        ...productPayload
-      }
-      products.value.unshift(newProduct)
-      showToast('Produto adicionado ao catálogo!')
-      
-      // Log activity
-      activityLogs.value.unshift({
-        text: `Elizabeth D. cadastrou novo produto: ${newProduct.name}`,
-        time: 'Agora',
-        type: 'success'
-      })
-    }
-
-    closeProductDrawer()
-  }, 1000)
-}
-
-function confirmDeleteProduct(prod) {
-  if (confirm(`Tem certeza que deseja excluir o produto "${prod.name}" do catálogo?`)) {
-    products.value = products.value.filter(p => p.id !== prod.id)
-    showToast('Produto removido do catálogo.')
-    
-    // Log activity
+  if (editingProduct.value) {
+    await updateProduct(editingProduct.value.id, productPayload)
+    showToast('Produto atualizado com sucesso!')
     activityLogs.value.unshift({
-      text: `Elizabeth D. excluiu o produto: ${prod.name}`,
+      text: `Elizabeth D. atualizou o produto: ${productPayload.name}`,
       time: 'Agora',
       type: 'info'
     })
+  } else {
+    await addProduct(productPayload)
+    showToast('Produto adicionado ao catálogo!')
+    activityLogs.value.unshift({
+      text: `Elizabeth D. cadastrou novo produto: ${productPayload.name}`,
+      time: 'Agora',
+      type: 'success'
+    })
+  }
+
+  formLoading.value = false
+  closeProductDrawer()
+}
+
+async function confirmDeleteProduct(prod) {
+  if (confirm(`Tem certeza que deseja excluir o produto "${prod.name}" do catálogo?`)) {
+    const success = await deleteProduct(prod.id)
+    if (success) {
+      showToast('Produto removido do catálogo.')
+      activityLogs.value.unshift({
+        text: `Elizabeth D. excluiu o produto: ${prod.name}`,
+        time: 'Agora',
+        type: 'info'
+      })
+    }
   }
 }
 
 // USER ACTIONS
-function saveUser() {
-  const newUser = {
-    id: users.value.length ? Math.max(...users.value.map(u => u.id)) + 1 : 1,
+async function saveUser() {
+  const userPayload = {
     name: userForm.name,
     email: userForm.email,
     phone: userForm.phone,
-    role: userForm.role,
-    date: new Date().toLocaleDateString('pt-BR')
+    role: userForm.role
   }
   
-  users.value.unshift(newUser)
+  const newUser = await addUser(userPayload)
   showUserModal.value = false
   
   // Reset
@@ -719,25 +699,27 @@ function saveUser() {
   userForm.phone = ''
   userForm.role = 'Cliente'
   
-  showToast('Usuário cadastrado com sucesso!')
-  
-  activityLogs.value.unshift({
-    text: `Elizabeth D. registrou usuário: ${newUser.name} (${newUser.role})`,
-    time: 'Agora',
-    type: 'user'
-  })
+  if (newUser) {
+    showToast('Usuário cadastrado com sucesso!')
+    activityLogs.value.unshift({
+      text: `Elizabeth D. registrou usuário: ${newUser.name} (${newUser.role})`,
+      time: 'Agora',
+      type: 'user'
+    })
+  }
 }
 
-function confirmDeleteUser(user) {
+async function confirmDeleteUser(user) {
   if (confirm(`Tem certeza que deseja remover o acesso de "${user.name}"?`)) {
-    users.value = users.value.filter(u => u.id !== user.id)
-    showToast('Usuário removido com sucesso.')
-    
-    activityLogs.value.unshift({
-      text: `Elizabeth D. removeu o usuário: ${user.name}`,
-      time: 'Agora',
-      type: 'info'
-    })
+    const success = await deleteUser(user.id)
+    if (success) {
+      showToast('Usuário removido com sucesso.')
+      activityLogs.value.unshift({
+        text: `Elizabeth D. removeu o usuário: ${user.name}`,
+        time: 'Agora',
+        type: 'info'
+      })
+    }
   }
 }
 

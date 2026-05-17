@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 
-// Global product interface
 export interface Product {
   id: number
   name: string
@@ -21,7 +20,6 @@ export interface Product {
   marca: string
 }
 
-// Global user interface
 export interface User {
   id: number
   name: string
@@ -31,10 +29,8 @@ export interface User {
   date: string
 }
 
-// Hash-based routing state
 export const currentRoute = ref<string>(window.location.hash || '#/')
 
-// Listen to hash changes globally to update currentRoute dynamically
 window.addEventListener('hashchange', () => {
   currentRoute.value = window.location.hash || '#/'
 })
@@ -44,14 +40,6 @@ export function navigateTo(hash: string) {
   currentRoute.value = hash
 }
 
-// Global user state (mock data for Admin Dashboard and modal registrations)
-export const users = ref<User[]>([
-  { id: 1, name: 'Elizabeth Domingues', email: 'eliza@example.com', phone: '(11) 99999-9999', role: 'Administrador', date: '17/05/2026' },
-  { id: 2, name: 'Ana Silva', email: 'ana@example.com', phone: '(11) 98888-8888', role: 'Cliente', date: '16/05/2026' },
-  { id: 3, name: 'Carlos Santos', email: 'carlos@example.com', phone: '(21) 97777-7777', role: 'Cliente', date: '15/05/2026' }
-])
-
-// Global product shapes
 export const SHAPES = {
   dress: 'M40 10 Q60 5 80 10 L90 60 Q85 120 60 170 Q35 120 30 60 Z',
   blouse: 'M25 20 Q60 10 95 20 L100 80 Q80 90 60 88 Q40 90 20 80 Z',
@@ -59,234 +47,120 @@ export const SHAPES = {
   skirt: 'M30 10 Q60 5 90 10 L100 80 Q80 150 60 160 Q40 150 20 80 Z',
 }
 
-// Global products state
-export const products = ref<Product[]>([
-  { 
-    id: 1, 
-    name: 'Vestido Midi Floral Recorte', 
-    brand: 'Farm Rio', 
-    price: 'R$ 389,90', 
-    originalPrice: null, 
-    installments: '6x R$ 64,98', 
-    color: '#e8ddd0', 
-    color2: '#d4c4b0', 
-    colorOptions: ['#1a1410', '#d4b896', '#c9938a'], 
-    sizes: ['PP', 'P', 'M', 'G', 'GG'], 
-    rating: 4.8, 
-    reviews: 142, 
-    shape: SHAPES.dress, 
-    shapeColor: '#8b6f47', 
-    badge: { label: 'Novo', type: 'new' }, 
-    categoria: 'Vestidos', 
-    marca: 'Farm Rio' 
-  },
-  { 
-    id: 2, 
-    name: 'Blusa Cropped Off-shoulder', 
-    brand: 'Animale', 
-    price: 'R$ 199,90', 
-    originalPrice: 'R$ 289,90', 
-    installments: '4x R$ 49,97', 
-    color: '#d4c8bc', 
-    color2: '#c0b0a0', 
-    colorOptions: ['#faf8f5', '#c0714a', '#4a6080'], 
-    sizes: ['PP', 'P', 'M', 'G'], 
-    rating: 4.5, 
-    reviews: 87, 
-    shape: SHAPES.blouse, 
-    shapeColor: '#c0714a', 
-    badge: { label: '-31%', type: 'sale' }, 
-    categoria: 'Blusas', 
-    marca: 'Animale' 
-  },
-  { 
-    id: 3, 
-    name: 'Calça Wide Leg Alfaiataria', 
-    brand: 'Shoulder', 
-    price: 'R$ 549,90', 
-    originalPrice: null, 
-    installments: '10x R$ 54,99', 
-    color: '#c4bdb5', 
-    color2: '#b0a898', 
-    colorOptions: ['#1a1410', '#8a8278', '#4a6080', '#5a7a5a'], 
-    sizes: ['34', '36', '38', '40', '42'], 
-    rating: 5, 
-    reviews: 203, 
-    shape: SHAPES.pants, 
-    shapeColor: '#3d2f1e', 
-    badge: null, 
-    categoria: 'Calças', 
-    marca: 'Shoulder' 
-  },
-  { 
-    id: 4, 
-    name: 'Saia Midi Plissada', 
-    brand: 'Forum', 
-    price: 'R$ 279,90', 
-    originalPrice: 'R$ 399,90', 
-    installments: '5x R$ 55,98', 
-    color: '#d8cfc6', 
-    color2: '#c4b8ac', 
-    colorOptions: ['#c9938a', '#7a2a35', '#8b6f47'], 
-    sizes: ['PP', 'P', 'M', 'G', 'GG', 'XGG'], 
-    rating: 4.7, 
-    reviews: 95, 
-    shape: SHAPES.skirt, 
-    shapeColor: '#7a2a35', 
-    badge: { label: 'Sale', type: 'sale' }, 
-    categoria: 'Saias', 
-    marca: 'Forum' 
-  },
-  { 
-    id: 5, 
-    name: 'Vestido Longo Decote V', 
-    brand: 'PatBo', 
-    price: 'R$ 1.290,00', 
-    originalPrice: null, 
-    installments: '10x R$ 129,00', 
-    color: '#1a1410', 
-    color2: '#2d241c', 
-    colorOptions: ['#1a1410', '#7a2a35'], 
-    sizes: ['P', 'M', 'G'], 
-    rating: 4.9, 
-    reviews: 61, 
-    shape: SHAPES.dress, 
-    shapeColor: '#d4b896', 
-    badge: { label: 'Exclusivo', type: 'exclusive' }, 
-    categoria: 'Vestidos', 
-    marca: 'PatBo' 
-  },
-  { 
-    id: 6, 
-    name: 'Blusa Tricot Texturizada', 
-    brand: 'Lenny Niemeyer', 
-    price: 'R$ 329,90', 
-    originalPrice: null, 
-    installments: '6x R$ 54,98', 
-    color: '#e0d5c8', 
-    color2: '#ccc0b0', 
-    colorOptions: ['#d4b896', '#faf8f5', '#8a8278', '#5a7a5a', '#c0714a'], 
-    sizes: ['PP', 'P', 'M', 'G', 'GG'], 
-    rating: 4.6, 
-    reviews: 118, 
-    shape: SHAPES.blouse, 
-    shapeColor: '#8b6f47', 
-    badge: null, 
-    categoria: 'Blusas', 
-    marca: 'Lenny Niemeyer' 
-  },
-  { 
-    id: 7, 
-    name: 'Conjunto Saia + Top', 
-    brand: 'Farm Rio', 
-    price: 'R$ 459,80', 
-    originalPrice: 'R$ 618,00', 
-    installments: '8x R$ 57,47', 
-    color: '#c8b89e', 
-    color2: '#b4a48a', 
-    colorOptions: ['#c0714a', '#8b6f47', '#1a1410'], 
-    sizes: ['PP', 'P', 'M', 'G'], 
-    rating: 4.4, 
-    reviews: 74, 
-    shape: SHAPES.skirt, 
-    shapeColor: '#c0714a', 
-    badge: { label: '-25%', type: 'sale' }, 
-    categoria: 'Saias', 
-    marca: 'Farm Rio' 
-  },
-  { 
-    id: 8, 
-    name: 'Calça Jeans Wide Cropped', 
-    brand: 'Animale', 
-    price: 'R$ 399,90', 
-    originalPrice: null, 
-    installments: '7x R$ 57,12', 
-    color: '#7a8898', 
-    color2: '#6a7888', 
-    colorOptions: ['#4a6080', '#1a1410'], 
-    sizes: ['34', '36', '38', '40', '42', '44'], 
-    rating: 4.7, 
-    reviews: 156, 
-    shape: SHAPES.pants, 
-    shapeColor: '#faf8f5', 
-    badge: { label: 'Mais vendido', type: 'best' }, 
-    categoria: 'Calças', 
-    marca: 'Animale' 
-  },
-  { 
-    id: 9, 
-    name: 'Vestido Midi Assimétrico', 
-    brand: 'Shoulder', 
-    price: 'R$ 689,90', 
-    originalPrice: 'R$ 890,00', 
-    installments: '10x R$ 68,99', 
-    color: '#8a7a6a', 
-    color2: '#7a6a5a', 
-    colorOptions: ['#8a8278', '#1a1410', '#7a2a35'], 
-    sizes: ['P', 'M', 'G', 'GG'], 
-    rating: 4.8, 
-    reviews: 88, 
-    shape: SHAPES.dress, 
-    shapeColor: '#e0d5c8', 
-    badge: { label: '-22%', type: 'sale' }, 
-    categoria: 'Vestidos', 
-    marca: 'Shoulder' 
-  },
-  { 
-    id: 10, 
-    name: 'Macacão Linho Relaxed', 
-    brand: 'Forum', 
-    price: 'R$ 499,90', 
-    originalPrice: null, 
-    installments: '9x R$ 55,54', 
-    color: '#d0c8b8', 
-    color2: '#bcb4a4', 
-    colorOptions: ['#d4b896', '#5a7a5a', '#1a1410'], 
-    sizes: ['PP', 'P', 'M', 'G'], 
-    rating: 4.6, 
-    reviews: 42, 
-    shape: SHAPES.pants, 
-    shapeColor: '#8b6f47', 
-    badge: { label: 'Novo', type: 'new' }, 
-    categoria: 'Macacões', 
-    marca: 'Forum' 
-  },
-  { 
-    id: 11, 
-    name: 'Blusa Seda Decote Profundo', 
-    brand: 'PatBo', 
-    price: 'R$ 289,90', 
-    originalPrice: 'R$ 420,00', 
-    installments: '5x R$ 57,98', 
-    color: '#c0b0a0', 
-    color2: '#ac9c8c', 
-    colorOptions: ['#faf8f5', '#c9938a', '#4a6080', '#1a1410'], 
-    sizes: ['PP', 'P', 'M'], 
-    rating: 4.9, 
-    reviews: 203, 
-    shape: SHAPES.blouse, 
-    shapeColor: '#7a2a35', 
-    badge: { label: '-31%', type: 'sale' }, 
-    categoria: 'Blusas', 
-    marca: 'PatBo' 
-  },
-  { 
-    id: 12, 
-    name: 'Vestido Ombro a Ombro', 
-    brand: 'Lenny Niemeyer', 
-    price: 'R$ 759,00', 
-    originalPrice: null, 
-    installments: '10x R$ 75,90', 
-    color: '#e8e0d4', 
-    color2: '#d4ccc0', 
-    colorOptions: ['#faf8f5', '#d4b896'], 
-    sizes: ['P', 'M', 'G', 'GG'], 
-    rating: 5, 
-    reviews: 37, 
-    shape: SHAPES.dress, 
-    shapeColor: '#c9938a', 
-    badge: { label: 'Exclusivo', type: 'exclusive' }, 
-    categoria: 'Vestidos', 
-    marca: 'Lenny Niemeyer' 
-  },
-])
+// ── REACTIVE STATES BACKED BY FULLSTACK API ──
+export const products = ref<Product[]>([])
+export const users = ref<User[]>([])
+
+// ── API CRUD OPERATIONS ──
+
+export async function fetchProducts() {
+  try {
+    const res = await fetch('/api/products')
+    if (res.ok) {
+      products.value = await res.json()
+    } else {
+      console.error('Failed to fetch products from backend API database')
+    }
+  } catch (error) {
+    console.error('Network error fetching products from database API:', error)
+  }
+}
+
+export async function addProduct(payload: Omit<Product, 'id'>) {
+  try {
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    if (res.ok) {
+      const newProduct = await res.json()
+      products.value.unshift(newProduct)
+      return newProduct
+    }
+  } catch (error) {
+    console.error('Error adding product to database:', error)
+  }
+}
+
+export async function updateProduct(id: number, payload: Omit<Product, 'id'>) {
+  try {
+    const res = await fetch(`/api/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    if (res.ok) {
+      const updatedProduct = await res.json()
+      const index = products.value.findIndex(p => p.id === id)
+      if (index !== -1) {
+        products.value[index] = updatedProduct
+      }
+      return updatedProduct
+    }
+  } catch (error) {
+    console.error('Error updating product in database:', error)
+  }
+}
+
+export async function deleteProduct(id: number) {
+  try {
+    const res = await fetch(`/api/products/${id}`, {
+      method: 'DELETE'
+    })
+    if (res.ok) {
+      products.value = products.value.filter(p => p.id !== id)
+      return true
+    }
+  } catch (error) {
+    console.error('Error deleting product from database:', error)
+  }
+  return false
+}
+
+export async function fetchUsers() {
+  try {
+    const res = await fetch('/api/users')
+    if (res.ok) {
+      users.value = await res.json()
+    }
+  } catch (error) {
+    console.error('Network error fetching users from database:', error)
+  }
+}
+
+export async function addUser(payload: Omit<User, 'id' | 'date'>) {
+  try {
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    if (res.ok) {
+      const newUser = await res.json()
+      users.value.unshift(newUser)
+      return newUser
+    }
+  } catch (error) {
+    console.error('Error adding user to database:', error)
+  }
+}
+
+export async function deleteUser(id: number) {
+  try {
+    const res = await fetch(`/api/users/${id}`, {
+      method: 'DELETE'
+    })
+    if (res.ok) {
+      users.value = users.value.filter(u => u.id !== id)
+      return true
+    }
+  } catch (error) {
+    console.error('Error deleting user from database:', error)
+  }
+  return false
+}
+
+// ── INITIAL AUTO FETCH ON BOOT ──
+fetchProducts()
+fetchUsers()
