@@ -247,7 +247,7 @@
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { products, SHAPES, addToCart as storeAddToCart } from './store'
+import { products, SHAPES, addToCart as storeAddToCart, searchQuery } from './store'
 
 const gridCols    = ref(3)
 const filtersOpen = ref(true)
@@ -301,10 +301,79 @@ const activeTags = computed(() => {
 
 const activeFiltersCount = computed(() => activeTags.value.length)
 
+function hexToRgb(hex) {
+  const clean = hex.replace('#', '')
+  const bigint = parseInt(clean, 16)
+  const r = (bigint >> 16) & 255
+  const g = (bigint >> 8) & 255
+  const b = bigint & 255
+  return { r, g, b }
+}
+
+function getColorName(hex) {
+  const colorMap = [
+    { value: 'Preto', hex: '#1a1410' }, { value: 'Branco', hex: '#faf8f5' },
+    { value: 'Bege', hex: '#d4b896' },  { value: 'Caramelo', hex: '#8b6f47' },
+    { value: 'Terracota', hex: '#c0714a' }, { value: 'Verde', hex: '#5a7a5a' },
+    { value: 'Azul', hex: '#4a6080' },  { value: 'Rosa', hex: '#c9938a' },
+    { value: 'Bordô', hex: '#7a2a35' }, { value: 'Cinza', hex: '#8a8278' },
+  ]
+  try {
+    const rgb = hexToRgb(hex)
+    let minD = Infinity
+    let closest = 'Bege'
+    for (const opt of colorMap) {
+      const optRgb = hexToRgb(opt.hex)
+      const d = Math.sqrt(
+        Math.pow(rgb.r - optRgb.r, 2) +
+        Math.pow(rgb.g - optRgb.g, 2) +
+        Math.pow(rgb.b - optRgb.b, 2)
+      )
+      if (d < minD) {
+        minD = d
+        closest = opt.value
+      }
+    }
+    return closest
+  } catch (e) {
+    return 'Bege'
+  }
+}
+
 const filteredProducts = computed(() => {
   let list = [...products.value]
-  if (selectedFilters.categoria.length) list = list.filter(p => selectedFilters.categoria.includes(p.categoria))
-  if (selectedFilters.marca.length)     list = list.filter(p => selectedFilters.marca.includes(p.marca))
+
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase().trim()
+    list = list.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      p.brand.toLowerCase().includes(q) ||
+      (p.categoria && p.categoria.toLowerCase().includes(q)) ||
+      (p.marca && p.marca.toLowerCase().includes(q))
+    )
+  }
+
+  if (selectedFilters.categoria.length) {
+    list = list.filter(p => selectedFilters.categoria.includes(p.categoria))
+  }
+  if (selectedFilters.marca.length) {
+    list = list.filter(p => selectedFilters.marca.includes(p.marca))
+  }
+
+  if (selectedFilters.tamanho.length) {
+    list = list.filter(p => p.sizes && p.sizes.some(sz => selectedFilters.tamanho.includes(sz)))
+  }
+  if (selectedFilters.cor.length) {
+    list = list.filter(p => {
+      const colors = p.colorOptions || (p.color ? [p.color] : [])
+      return colors.some(c => selectedFilters.cor.includes(getColorName(c)))
+    })
+  }
+
+  list = list.filter(p => {
+    const price = parsePrice(p.price)
+    return price >= priceRange.value[0] && price <= priceRange.value[1]
+  })
 
   const sortMap = {
     newest: (a, b) => b.id - a.id,

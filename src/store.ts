@@ -63,6 +63,7 @@ export function clearCart() {
 }
 
 export const currentRoute = ref<string>(window.location.hash || '#/')
+export const searchQuery = ref<string>('')
 
 window.addEventListener('hashchange', () => {
   currentRoute.value = window.location.hash || '#/'

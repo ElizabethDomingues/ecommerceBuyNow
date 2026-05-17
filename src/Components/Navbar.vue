@@ -206,9 +206,7 @@
 import { ref, computed } from 'vue'
 import AuthModal from './AuthModal.vue'
 import ProfileModal from './ProfileModal.vue'
-import { currentUser, cartItems, removeFromCart, clearCart } from '../store'
-
-const searchQuery = ref('')
+import { currentUser, cartItems, removeFromCart, clearCart, searchQuery } from '../store'
 const searchOpen = ref(false)
 const searchFocused = ref(false)
 const mobileOpen = ref(false)
