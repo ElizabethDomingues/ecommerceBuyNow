@@ -310,7 +310,8 @@ async function createMysqlTables() {
       rating FLOAT DEFAULT 5.0,
       reviews INT DEFAULT 0,
       categoria VARCHAR(100) NOT NULL,
-      marca VARCHAR(100) NOT NULL
+      marca VARCHAR(100) NOT NULL,
+      image LONGTEXT
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `
 
@@ -340,6 +341,10 @@ async function createMysqlTables() {
   }
   try {
     await mysqlPool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Ativo'")
+  } catch (e) {
+  }
+  try {
+    await mysqlPool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image LONGTEXT')
   } catch (e) {
   }
 }
@@ -455,14 +460,15 @@ app.post('/api/products', async (req, res) => {
   if (!useJsonFallback) {
     try {
       const [result] = await mysqlPool.query(
-        `INSERT INTO products (name, brand, price, originalPrice, installments, color, color2, shape, shapeColor, badge, sizes, colorOptions, rating, reviews, categoria, marca) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO products (name, brand, price, originalPrice, installments, color, color2, shape, shapeColor, badge, sizes, colorOptions, rating, reviews, categoria, marca, image) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           p.name, p.brand, p.price, p.originalPrice, p.installments, p.color, p.color2, p.shape, p.shapeColor,
           p.badge ? JSON.stringify(p.badge) : null,
           JSON.stringify(p.sizes),
           JSON.stringify(p.colorOptions),
-          p.rating || 5.0, p.reviews || 1, p.categoria, p.marca
+          p.rating || 5.0, p.reviews || 1, p.categoria, p.marca,
+          p.image || null
         ]
       )
       const newProd = { id: result.insertId, ...p }
@@ -489,7 +495,7 @@ app.put('/api/products/:id', async (req, res) => {
   if (!useJsonFallback) {
     try {
       await mysqlPool.query(
-        `UPDATE products SET name=?, brand=?, price=?, originalPrice=?, installments=?, color=?, color2=?, shape=?, shapeColor=?, badge=?, sizes=?, colorOptions=?, categoria=?, marca=? 
+        `UPDATE products SET name=?, brand=?, price=?, originalPrice=?, installments=?, color=?, color2=?, shape=?, shapeColor=?, badge=?, sizes=?, colorOptions=?, categoria=?, marca=?, image=? 
          WHERE id=?`,
         [
           p.name, p.brand, p.price, p.originalPrice, p.installments, p.color, p.color2, p.shape, p.shapeColor,
@@ -497,6 +503,7 @@ app.put('/api/products/:id', async (req, res) => {
           JSON.stringify(p.sizes),
           JSON.stringify(p.colorOptions),
           p.categoria, p.marca,
+          p.image || null,
           id
         ]
       )

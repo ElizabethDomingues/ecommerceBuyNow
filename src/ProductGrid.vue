@@ -140,7 +140,8 @@
             <div class="prod-img-wrap">
               <div class="prod-img" :style="{ background: product.color }">
                 <div class="prod-img-inner" :style="{ background: product.color2 }"></div>
-                <svg class="prod-silhouette" viewBox="0 0 120 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <img v-if="product.image" :src="product.image" class="prod-cover-img" />
+                <svg v-else class="prod-silhouette" viewBox="0 0 120 180" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path :d="product.shape" :fill="product.shapeColor" opacity="0.55"/>
                 </svg>
               </div>
@@ -839,6 +840,14 @@ function showToast(msg) {
   left: 50%;
   transform: translateX(-50%);
   filter: drop-shadow(0 8px 24px rgba(0,0,0,0.15));
+}
+.prod-cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
 }
 
 .prod-actions {

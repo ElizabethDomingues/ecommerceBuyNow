@@ -187,7 +187,8 @@
                 <tr v-for="prod in filteredProducts" :key="prod.id">
                   <td>
                     <div class="table-prod-preview" :style="{ background: prod.color }">
-                      <svg width="24" height="36" viewBox="0 0 120 180" fill="none">
+                      <img v-if="prod.image" :src="prod.image" class="table-prod-cover-img" />
+                      <svg v-else width="24" height="36" viewBox="0 0 120 180" fill="none">
                         <path :d="prod.shape" :fill="prod.shapeColor || '#8b6f47'" opacity="0.8"/>
                       </svg>
                     </div>
@@ -350,7 +351,8 @@
               <div class="silhouette-preview-box">
                 <div class="preview-stage" :style="{ background: productForm.color }">
                   <div class="preview-shadow" :style="{ background: productForm.color2 }"></div>
-                  <svg class="preview-svg" viewBox="0 0 120 180" fill="none">
+                  <img v-if="productForm.image" :src="productForm.image" class="preview-stage-img" />
+                  <svg v-else class="preview-svg" viewBox="0 0 120 180" fill="none">
                     <path :d="SHAPES[productForm.shape]" :fill="productForm.shapeColor" opacity="0.8"/>
                   </svg>
                 </div>
@@ -365,6 +367,24 @@
               <div class="admin-form-group">
                 <label>Nome do Produto</label>
                 <input type="text" v-model="productForm.name" required placeholder="Ex: Vestido Midi Floral Lux" />
+              </div>
+
+              <div class="admin-form-group">
+                <label>Foto de Capa (Opcional - Upload do Dispositivo)</label>
+                <div class="file-upload-wrapper">
+                  <input type="file" ref="fileInput" @change="handleImageUpload" accept="image/*" class="file-upload-input" id="prodImageUpload" />
+                  <label for="prodImageUpload" class="file-upload-label">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span>{{ productForm.image ? 'Alterar Imagem da Capa' : 'Escolher Foto do Dispositivo' }}</span>
+                  </label>
+                  <button v-if="productForm.image" type="button" class="remove-image-btn" @click="removeProductImage">
+                    Remover Imagem
+                  </button>
+                </div>
               </div>
 
               <div class="form-row-2">
@@ -633,7 +653,8 @@ const productForm = reactive({
   color2: '#d4c4b0',
   badgeLabel: '',
   badgeType: 'new',
-  sizes: []
+  sizes: [],
+  image: null
 })
 
 const userForm = reactive({
@@ -645,6 +666,26 @@ const userForm = reactive({
 })
 
 // DRAWER ACTIONS
+const fileInput = ref(null)
+
+function handleImageUpload(e) {
+  const file = e.target.files?.[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      productForm.image = event.target?.result
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+function removeProductImage() {
+  productForm.image = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
 function openProductDrawer(prod = null) {
   if (prod) {
     editingProduct.value = prod
@@ -660,6 +701,7 @@ function openProductDrawer(prod = null) {
     productForm.badgeLabel = prod.badge ? prod.badge.label : ''
     productForm.badgeType = prod.badge ? prod.badge.type : 'new'
     productForm.sizes = [...prod.sizes]
+    productForm.image = prod.image || null
   } else {
     editingProduct.value = null
     productForm.name = ''
@@ -674,6 +716,7 @@ function openProductDrawer(prod = null) {
     productForm.badgeLabel = ''
     productForm.badgeType = 'new'
     productForm.sizes = ['P', 'M', 'G']
+    productForm.image = null
   }
   showProductDrawer.value = true
 }
@@ -714,7 +757,8 @@ async function saveProduct() {
     colorOptions: [productForm.color, productForm.color2, '#1a1410'],
     rating: editingProduct.value ? editingProduct.value.rating : 5.0,
     reviews: editingProduct.value ? editingProduct.value.reviews : 1,
-    marca: productForm.brand
+    marca: productForm.brand,
+    image: productForm.image
   }
 
   if (editingProduct.value) {
@@ -1632,6 +1676,72 @@ function goHome() {
   justify-content: center;
   overflow: hidden;
   position: relative;
+}
+
+/* FILE UPLOAD STYLING */
+.file-upload-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-upload-input {
+  display: none !important;
+}
+
+.file-upload-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed #4a3e35;
+  border-radius: 4px;
+  padding: 10px 16px;
+  color: #d4b896;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-upload-label:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #8b6f47;
+  color: #ffebd1;
+}
+
+.remove-image-btn {
+  background: rgba(220, 100, 100, 0.15);
+  color: #ff9999;
+  border: 1px solid rgba(220, 100, 100, 0.3);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: all 0.2s ease;
+}
+
+.remove-image-btn:hover {
+  background: rgba(220, 100, 100, 0.25);
+  color: #ffffff;
+}
+
+.preview-stage-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 2;
+}
+
+.table-prod-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .preview-shadow {
