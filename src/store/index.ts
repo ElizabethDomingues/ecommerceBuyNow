@@ -360,10 +360,10 @@ export async function updateUser(id: number, payload: Partial<Omit<User, 'id' | 
     const idx = all.findIndex(u => u.id === id)
     if (idx === -1) return null
 
-    const updated: User = { ...all[idx], ...payload, id: all[idx].id, date: all[idx].date }
+    const updated: User = { ...all[idx], ...payload } as User
     all[idx] = updated
     lsSaveUsers(all)
-    users.value = [...all] // novo array para forçar reatividade Vue
+    users.value = [...all]
 
     if (currentUser.value?.id === id) {
       if (updated.status === 'Inativo') {
