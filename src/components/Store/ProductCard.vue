@@ -5,7 +5,7 @@
     @mouseenter="hoveredId = product.id"
     @mouseleave="hoveredId = null"
   >
-    <span v-if="product.stock === 0" class="prod-badge out-of-stock">Esgotado</span>
+    <span v-if="Number(product.stock) === 0" class="prod-badge out-of-stock">Esgotado</span>
     <span v-else-if="product.badge" class="prod-badge" :class="product.badge.type">{{ product.badge.label }}</span>
 
     <div class="prod-img-wrap">
@@ -28,7 +28,7 @@
           </svg>
         </button>
       </div>
-      <div v-if="product.stock > 0" class="quick-add" :class="{ visible: hoveredId === product.id }">
+      <div v-if="Number(product.stock) > 0" class="quick-add" :class="{ visible: hoveredId === product.id }">
         <button
           v-for="sz in product.sizes.slice(0,4)"
           :key="sz"
@@ -65,22 +65,22 @@
       </div>
       
       <div class="prod-stock-indicator">
-        <span v-if="product.stock === 0" class="stock-badge out-of-stock">Sem estoque</span>
-        <span v-else-if="product.stock <= 5" class="stock-badge low-stock">Apenas {{ product.stock }} unidades!</span>
-        <span v-else class="stock-badge in-stock">{{ product.stock }} unidades em estoque</span>
+        <span v-if="Number(product.stock) === 0" class="stock-badge out-of-stock">Sem estoque</span>
+        <span v-else-if="Number(product.stock) <= 5" class="stock-badge low-stock">Apenas {{ Number(product.stock) }} unidades!</span>
+        <span v-else class="stock-badge in-stock">{{ Number(product.stock) }} unidades em estoque</span>
       </div>
       
       <button 
         class="add-to-bag-btn" 
-        :disabled="product.stock === 0"
-        @click.stop="product.stock > 0 ? $emit('quickAddToCart', product) : null"
+        :disabled="Number(product.stock) === 0"
+        @click.stop="Number(product.stock) > 0 ? $emit('quickAddToCart', product) : null"
       >
-        <svg v-if="product.stock > 0" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg v-if="Number(product.stock) > 0" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
           <line x1="3" y1="6" x2="21" y2="6"/>
           <path d="M16 10a4 4 0 0 1-8 0"/>
         </svg>
-        {{ product.stock > 0 ? 'Adicionar à Sacola' : 'Esgotado' }}
+        {{ Number(product.stock) > 0 ? 'Adicionar à Sacola' : 'Esgotado' }}
       </button>
     </div>
   </article>

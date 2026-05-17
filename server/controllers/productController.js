@@ -9,8 +9,9 @@ export async function getProducts(req, res) {
       const formatted = rows.map(r => ({
         ...r,
         badge: r.badge ? JSON.parse(r.badge) : null,
-        sizes: JSON.parse(r.sizes),
-        colorOptions: JSON.parse(r.colorOptions),
+        sizes: r.sizes ? JSON.parse(r.sizes) : [],
+        colorOptions: r.colorOptions ? JSON.parse(r.colorOptions) : [],
+        stock: r.stock !== null && r.stock !== undefined ? parseInt(r.stock) : 10,
         active: r.active === 1 || r.active === true
       }))
       return res.json(formatted)
@@ -22,6 +23,7 @@ export async function getProducts(req, res) {
   const db = loadJsonData()
   const formatted = db.products.map(p => ({
     ...p,
+    stock: p.stock !== null && p.stock !== undefined ? parseInt(p.stock) : 10,
     active: p.active !== false && p.active !== 0
   }))
   res.json(formatted)
