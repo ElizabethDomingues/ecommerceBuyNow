@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 
 // ── BACKEND CONFIG ──────────────────────────────────────────────────────────
-// Se VITE_API_URL estiver vazio ou não definido, usa localStorage como banco.
 const RAW_API_URL = (import.meta as any).env?.VITE_API_URL || ''
 const API_BASE_URL = RAW_API_URL && RAW_API_URL.startsWith('http') ? RAW_API_URL : ''
 const USE_LOCAL = !API_BASE_URL
@@ -62,18 +61,18 @@ export const SHAPES = {
 
 // ── DADOS PADRÃO (seed) ─────────────────────────────────────────────────────
 const DEFAULT_PRODUCTS: Omit<Product, 'id'>[] = [
-  { name: 'Vestido Midi Floral Recorte', brand: 'Farm Rio', price: 'R$ 389,90', originalPrice: null, installments: '6x R$ 64,98', color: '#e8ddd0', color2: '#d4c4b0', colorOptions: ['#1a1410', '#d4b896', '#c9938a'], sizes: ['PP','P','M','G','GG'], rating: 4.8, reviews: 142, shape: SHAPES.dress, shapeColor: '#8b6f47', badge: { label: 'Novo', type: 'new' }, categoria: 'Vestidos', marca: 'Farm Rio', stock: 15, active: true },
-  { name: 'Blusa Cropped Off-shoulder', brand: 'Animale', price: 'R$ 199,90', originalPrice: 'R$ 289,90', installments: '4x R$ 49,97', color: '#d4c8bc', color2: '#c0b0a0', colorOptions: ['#faf8f5','#c0714a','#4a6080'], sizes: ['PP','P','M','G'], rating: 4.5, reviews: 87, shape: SHAPES.blouse, shapeColor: '#c0714a', badge: { label: '-31%', type: 'sale' }, categoria: 'Blusas', marca: 'Animale', stock: 20, active: true },
-  { name: 'Calça Wide Leg Alfaiataria', brand: 'Shoulder', price: 'R$ 549,90', originalPrice: null, installments: '10x R$ 54,99', color: '#c4bdb5', color2: '#b0a898', colorOptions: ['#1a1410','#8a8278','#4a6080','#5a7a5a'], sizes: ['34','36','38','40','42'], rating: 5, reviews: 203, shape: SHAPES.pants, shapeColor: '#3d2f1e', badge: null, categoria: 'Calças', marca: 'Shoulder', stock: 8, active: true },
-  { name: 'Saia Midi Plissada', brand: 'Forum', price: 'R$ 279,90', originalPrice: 'R$ 399,90', installments: '5x R$ 55,98', color: '#d8cfc6', color2: '#c4b8ac', colorOptions: ['#c9938a','#7a2a35','#8b6f47'], sizes: ['PP','P','M','G','GG','XGG'], rating: 4.7, reviews: 95, shape: SHAPES.skirt, shapeColor: '#7a2a35', badge: { label: 'Sale', type: 'sale' }, categoria: 'Saias', marca: 'Forum', stock: 12, active: true },
-  { name: 'Vestido Longo Decote V', brand: 'PatBo', price: 'R$ 1.290,00', originalPrice: null, installments: '10x R$ 129,00', color: '#1a1410', color2: '#2d241c', colorOptions: ['#1a1410','#7a2a35'], sizes: ['P','M','G'], rating: 4.9, reviews: 61, shape: SHAPES.dress, shapeColor: '#d4b896', badge: { label: 'Exclusivo', type: 'exclusive' }, categoria: 'Vestidos', marca: 'PatBo', stock: 5, active: true },
-  { name: 'Blusa Tricot Texturizada', brand: 'Lenny Niemeyer', price: 'R$ 329,90', originalPrice: null, installments: '6x R$ 54,98', color: '#e0d5c8', color2: '#ccc0b0', colorOptions: ['#d4b896','#faf8f5','#8a8278','#5a7a5a','#c0714a'], sizes: ['PP','P','M','G','GG'], rating: 4.6, reviews: 118, shape: SHAPES.blouse, shapeColor: '#8b6f47', badge: null, categoria: 'Blusas', marca: 'Lenny Niemeyer', stock: 18, active: true },
-  { name: 'Conjunto Saia + Top', brand: 'Farm Rio', price: 'R$ 459,80', originalPrice: 'R$ 618,00', installments: '8x R$ 57,47', color: '#c8b89e', color2: '#b4a48a', colorOptions: ['#c0714a','#8b6f47','#1a1410'], sizes: ['PP','P','M','G'], rating: 4.4, reviews: 74, shape: SHAPES.skirt, shapeColor: '#c0714a', badge: { label: '-25%', type: 'sale' }, categoria: 'Saias', marca: 'Farm Rio', stock: 9, active: true },
-  { name: 'Calça Jeans Wide Cropped', brand: 'Animale', price: 'R$ 399,90', originalPrice: null, installments: '7x R$ 57,12', color: '#7a8898', color2: '#6a7888', colorOptions: ['#4a6080','#1a1410'], sizes: ['34','36','38','40','42','44'], rating: 4.7, reviews: 156, shape: SHAPES.pants, shapeColor: '#faf8f5', badge: { label: 'Mais vendido', type: 'best' }, categoria: 'Calças', marca: 'Animale', stock: 22, active: true },
-  { name: 'Vestido Midi Assimétrico', brand: 'Shoulder', price: 'R$ 689,90', originalPrice: 'R$ 890,00', installments: '10x R$ 68,99', color: '#8a7a6a', color2: '#7a6a5a', colorOptions: ['#8a8278','#1a1410','#7a2a35'], sizes: ['P','M','G','GG'], rating: 4.8, reviews: 88, shape: SHAPES.dress, shapeColor: '#e0d5c8', badge: { label: '-22%', type: 'sale' }, categoria: 'Vestidos', marca: 'Shoulder', stock: 7, active: true },
-  { name: 'Macacão Linho Relaxed', brand: 'Forum', price: 'R$ 499,90', originalPrice: null, installments: '9x R$ 55,54', color: '#d0c8b8', color2: '#bcb4a4', colorOptions: ['#d4b896','#5a7a5a','#1a1410'], sizes: ['PP','P','M','G'], rating: 4.6, reviews: 42, shape: SHAPES.pants, shapeColor: '#8b6f47', badge: { label: 'Novo', type: 'new' }, categoria: 'Macacões', marca: 'Forum', stock: 11, active: true },
-  { name: 'Blusa Seda Decote Profundo', brand: 'PatBo', price: 'R$ 289,90', originalPrice: 'R$ 420,00', installments: '5x R$ 57,98', color: '#c0b0a0', color2: '#ac9c8c', colorOptions: ['#faf8f5','#c9938a','#4a6080','#1a1410'], sizes: ['PP','P','M'], rating: 4.9, reviews: 203, shape: SHAPES.blouse, shapeColor: '#7a2a35', badge: { label: '-31%', type: 'sale' }, categoria: 'Blusas', marca: 'PatBo', stock: 6, active: true },
-  { name: 'Vestido Ombro a Ombro', brand: 'Lenny Niemeyer', price: 'R$ 759,00', originalPrice: null, installments: '10x R$ 75,90', color: '#e8e0d4', color2: '#d4ccc0', colorOptions: ['#faf8f5','#d4b896'], sizes: ['P','M','G','GG'], rating: 5, reviews: 37, shape: SHAPES.dress, shapeColor: '#c9938a', badge: { label: 'Exclusivo', type: 'exclusive' }, categoria: 'Vestidos', marca: 'Lenny Niemeyer', stock: 4, active: true },
+  { name: 'Vestido Midi Floral Recorte', brand: 'Farm Rio', price: 'R$ 389,90', originalPrice: null, installments: '6x R$ 64,98', color: '#e8ddd0', color2: '#d4c4b0', colorOptions: ['#1a1410', '#d4b896', '#c9938a'], sizes: ['PP', 'P', 'M', 'G', 'GG'], rating: 4.8, reviews: 142, shape: SHAPES.dress, shapeColor: '#8b6f47', badge: { label: 'Novo', type: 'new' }, categoria: 'Vestidos', marca: 'Farm Rio', stock: 15, active: true },
+  { name: 'Blusa Cropped Off-shoulder', brand: 'Animale', price: 'R$ 199,90', originalPrice: 'R$ 289,90', installments: '4x R$ 49,97', color: '#d4c8bc', color2: '#c0b0a0', colorOptions: ['#faf8f5', '#c0714a', '#4a6080'], sizes: ['PP', 'P', 'M', 'G'], rating: 4.5, reviews: 87, shape: SHAPES.blouse, shapeColor: '#c0714a', badge: { label: '-31%', type: 'sale' }, categoria: 'Blusas', marca: 'Animale', stock: 20, active: true },
+  { name: 'Calça Wide Leg Alfaiataria', brand: 'Shoulder', price: 'R$ 549,90', originalPrice: null, installments: '10x R$ 54,99', color: '#c4bdb5', color2: '#b0a898', colorOptions: ['#1a1410', '#8a8278', '#4a6080', '#5a7a5a'], sizes: ['34', '36', '38', '40', '42'], rating: 5, reviews: 203, shape: SHAPES.pants, shapeColor: '#3d2f1e', badge: null, categoria: 'Calças', marca: 'Shoulder', stock: 8, active: true },
+  { name: 'Saia Midi Plissada', brand: 'Forum', price: 'R$ 279,90', originalPrice: 'R$ 399,90', installments: '5x R$ 55,98', color: '#d8cfc6', color2: '#c4b8ac', colorOptions: ['#c9938a', '#7a2a35', '#8b6f47'], sizes: ['PP', 'P', 'M', 'G', 'GG', 'XGG'], rating: 4.7, reviews: 95, shape: SHAPES.skirt, shapeColor: '#7a2a35', badge: { label: 'Sale', type: 'sale' }, categoria: 'Saias', marca: 'Forum', stock: 12, active: true },
+  { name: 'Vestido Longo Decote V', brand: 'PatBo', price: 'R$ 1.290,00', originalPrice: null, installments: '10x R$ 129,00', color: '#1a1410', color2: '#2d241c', colorOptions: ['#1a1410', '#7a2a35'], sizes: ['P', 'M', 'G'], rating: 4.9, reviews: 61, shape: SHAPES.dress, shapeColor: '#d4b896', badge: { label: 'Exclusivo', type: 'exclusive' }, categoria: 'Vestidos', marca: 'PatBo', stock: 5, active: true },
+  { name: 'Blusa Tricot Texturizada', brand: 'Lenny Niemeyer', price: 'R$ 329,90', originalPrice: null, installments: '6x R$ 54,98', color: '#e0d5c8', color2: '#ccc0b0', colorOptions: ['#d4b896', '#faf8f5', '#8a8278', '#5a7a5a', '#c0714a'], sizes: ['PP', 'P', 'M', 'G', 'GG'], rating: 4.6, reviews: 118, shape: SHAPES.blouse, shapeColor: '#8b6f47', badge: null, categoria: 'Blusas', marca: 'Lenny Niemeyer', stock: 18, active: true },
+  { name: 'Conjunto Saia + Top', brand: 'Farm Rio', price: 'R$ 459,80', originalPrice: 'R$ 618,00', installments: '8x R$ 57,47', color: '#c8b89e', color2: '#b4a48a', colorOptions: ['#c0714a', '#8b6f47', '#1a1410'], sizes: ['PP', 'P', 'M', 'G'], rating: 4.4, reviews: 74, shape: SHAPES.skirt, shapeColor: '#c0714a', badge: { label: '-25%', type: 'sale' }, categoria: 'Saias', marca: 'Farm Rio', stock: 9, active: true },
+  { name: 'Calça Jeans Wide Cropped', brand: 'Animale', price: 'R$ 399,90', originalPrice: null, installments: '7x R$ 57,12', color: '#7a8898', color2: '#6a7888', colorOptions: ['#4a6080', '#1a1410'], sizes: ['34', '36', '38', '40', '42', '44'], rating: 4.7, reviews: 156, shape: SHAPES.pants, shapeColor: '#faf8f5', badge: { label: 'Mais vendido', type: 'best' }, categoria: 'Calças', marca: 'Animale', stock: 22, active: true },
+  { name: 'Vestido Midi Assimétrico', brand: 'Shoulder', price: 'R$ 689,90', originalPrice: 'R$ 890,00', installments: '10x R$ 68,99', color: '#8a7a6a', color2: '#7a6a5a', colorOptions: ['#8a8278', '#1a1410', '#7a2a35'], sizes: ['P', 'M', 'G', 'GG'], rating: 4.8, reviews: 88, shape: SHAPES.dress, shapeColor: '#e0d5c8', badge: { label: '-22%', type: 'sale' }, categoria: 'Vestidos', marca: 'Shoulder', stock: 7, active: true },
+  { name: 'Macacão Linho Relaxed', brand: 'Forum', price: 'R$ 499,90', originalPrice: null, installments: '9x R$ 55,54', color: '#d0c8b8', color2: '#bcb4a4', colorOptions: ['#d4b896', '#5a7a5a', '#1a1410'], sizes: ['PP', 'P', 'M', 'G'], rating: 4.6, reviews: 42, shape: SHAPES.pants, shapeColor: '#8b6f47', badge: { label: 'Novo', type: 'new' }, categoria: 'Macacões', marca: 'Forum', stock: 11, active: true },
+  { name: 'Blusa Seda Decote Profundo', brand: 'PatBo', price: 'R$ 289,90', originalPrice: 'R$ 420,00', installments: '5x R$ 57,98', color: '#c0b0a0', color2: '#ac9c8c', colorOptions: ['#faf8f5', '#c9938a', '#4a6080', '#1a1410'], sizes: ['PP', 'P', 'M'], rating: 4.9, reviews: 203, shape: SHAPES.blouse, shapeColor: '#7a2a35', badge: { label: '-31%', type: 'sale' }, categoria: 'Blusas', marca: 'PatBo', stock: 6, active: true },
+  { name: 'Vestido Ombro a Ombro', brand: 'Lenny Niemeyer', price: 'R$ 759,00', originalPrice: null, installments: '10x R$ 75,90', color: '#e8e0d4', color2: '#d4ccc0', colorOptions: ['#faf8f5', '#d4b896'], sizes: ['P', 'M', 'G', 'GG'], rating: 5, reviews: 37, shape: SHAPES.dress, shapeColor: '#c9938a', badge: { label: 'Exclusivo', type: 'exclusive' }, categoria: 'Vestidos', marca: 'Lenny Niemeyer', stock: 4, active: true },
 ]
 
 const DEFAULT_USERS: Omit<User, 'id'>[] = [
@@ -90,7 +89,7 @@ function lsGetProducts(): Product[] {
   try {
     const raw = localStorage.getItem(LS_PRODUCTS)
     if (raw) return JSON.parse(raw)
-  } catch {}
+  } catch { }
   // Seed com dados padrão na primeira visita
   const seeded = DEFAULT_PRODUCTS.map((p, i) => ({ id: i + 1, ...p }))
   localStorage.setItem(LS_PRODUCTS, JSON.stringify(seeded))
@@ -101,7 +100,7 @@ function lsGetUsers(): User[] {
   try {
     const raw = localStorage.getItem(LS_USERS)
     if (raw) return JSON.parse(raw)
-  } catch {}
+  } catch { }
   const seeded = DEFAULT_USERS.map((u, i) => ({ id: i + 1, ...u }))
   localStorage.setItem(LS_USERS, JSON.stringify(seeded))
   return seeded
@@ -359,21 +358,23 @@ export async function updateUser(id: number, payload: Partial<Omit<User, 'id' | 
   if (USE_LOCAL) {
     const all = lsGetUsers()
     const idx = all.findIndex(u => u.id === id)
-    if (idx !== -1) {
-      all[idx] = { ...all[idx], ...payload }
-      lsSaveUsers(all)
-      users.value = all
-      if (currentUser.value?.id === id) {
-        if (payload.status === 'Inativo') {
-          currentUser.value = null
-          localStorage.removeItem('aure_admin_user')
-        } else {
-          currentUser.value = all[idx]
-        }
+    if (idx === -1) return null
+
+    const updated: User = { ...all[idx], ...payload }
+    all[idx] = updated
+    lsSaveUsers(all)
+    users.value = [...all] // novo array para forçar reatividade Vue
+
+    if (currentUser.value?.id === id) {
+      if (updated.status === 'Inativo') {
+        currentUser.value = null
+        localStorage.removeItem('aure_admin_user')
+      } else {
+        currentUser.value = updated
+        localStorage.setItem('aure_admin_user', JSON.stringify(updated))
       }
-      return all[idx]
     }
-    return null
+    return updated
   }
   try {
     const res = await fetch(`${API_BASE_URL}/api/users/${id}`, {
@@ -388,15 +389,18 @@ export async function updateUser(id: number, payload: Partial<Omit<User, 'id' | 
       if (currentUser.value && currentUser.value.id === id) {
         if (updatedUser.status === 'Inativo') {
           currentUser.value = null
-          localStorage.removeItem('adminUser')
+          localStorage.removeItem('aure_admin_user')
         } else {
           currentUser.value = updatedUser
+          localStorage.setItem('aure_admin_user', JSON.stringify(updatedUser))
         }
       }
       return updatedUser
     }
   } catch (error) { console.error('Error updating user in database:', error) }
+  return null
 }
+
 
 export async function deleteUser(id: number) {
   if (USE_LOCAL) {
