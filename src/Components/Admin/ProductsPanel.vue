@@ -30,6 +30,7 @@
             <th>Produto</th>
             <th>Marca</th>
             <th>Categoria</th>
+            <th>Estoque</th>
             <th>Preço</th>
             <th class="text-right">Ações</th>
           </tr>
@@ -52,22 +53,37 @@
                 </span>
               </div>
             </td>
-            <td><span class="text-secondary">{{ prod.brand }}</span></td>
+             <td><span class="text-secondary">{{ prod.brand }}</span></td>
             <td><span class="category-chip">{{ prod.categoria }}</span></td>
+            <td>
+              <span class="table-stock-indicator" :class="{ 'low': prod.stock <= 5, 'out': prod.stock === 0 }">
+                {{ prod.stock !== undefined ? prod.stock : 10 }} un
+              </span>
+            </td>
             <td><span class="table-price">{{ prod.price }}</span></td>
             <td class="text-right actions-cell">
-              <button class="table-action-btn edit" @click="openProductDrawer(prod)" title="Editar">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"/>
-                </svg>
-              </button>
-              <button class="table-action-btn delete" @click="confirmDeleteProduct(prod)" title="Excluir">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                </svg>
-              </button>
+              <!-- Inline delete confirmation popover -->
+              <transition name="row-confirm-fade">
+                <div v-if="productToDelete?.id === prod.id" class="row-delete-confirm">
+                  <span class="row-confirm-label">Excluir produto?</span>
+                  <button class="row-confirm-yes" @click="handleDeleteProduct">Sim</button>
+                  <button class="row-confirm-no" @click="closeDeleteModal">Não</button>
+                </div>
+              </transition>
+              <div v-if="!productToDelete || productToDelete.id !== prod.id" class="row-normal-actions">
+                <button class="table-action-btn edit" @click="openProductDrawer(prod)" title="Editar">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"/>
+                  </svg>
+                </button>
+                <button class="table-action-btn delete" @click="confirmDeleteProduct(prod)" title="Excluir">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
+              </div>
             </td>
           </tr>
           <tr v-if="filteredProducts.length === 0">
@@ -110,7 +126,23 @@
                 </div>
               </div>
 
+              <!-- Quick Delete Button for Edit Mode -->
+              <div v-if="editingProduct" class="drawer-delete-action-wrap">
+                <button type="button" class="drawer-delete-btn" @click="confirmDeleteProduct(editingProduct)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                  Excluir Este Produto
+                </button>
+              </div>
+
               <!-- Form inputs -->
+              <div v-if="editingProduct" class="admin-form-group">
+                <label>ID do Produto</label>
+                <input type="text" :value="editingProduct.id" readonly class="readonly-input" />
+              </div>
+
               <div class="admin-form-group">
                 <label>Nome do Produto</label>
                 <input type="text" v-model="productForm.name" required placeholder="Ex: Vestido Midi Floral Lux" />
@@ -214,6 +246,30 @@
                 </div>
               </div>
 
+              <!-- Novo campo de quantidade em estoque e ativo -->
+              <div class="form-row-2">
+                <div class="admin-form-group">
+                  <label>Quantidade em Estoque</label>
+                  <input type="number" v-model.number="productForm.stock" required min="0" />
+                </div>
+                <div class="admin-form-group">
+                  <label>Produto Ativo (sim/não)</label>
+                  <div class="active-toggle-wrap">
+                    <label class="switch-lbl">
+                      <input type="checkbox" v-model="productForm.active" />
+                      <span class="slider-switch"></span>
+                    </label>
+                    <span class="active-status-text">{{ productForm.active ? 'Sim, visível na loja' : 'Não, oculto na loja' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Novo campo de descrição -->
+              <div class="admin-form-group">
+                <label>Descrição do Produto</label>
+                <textarea v-model="productForm.description" rows="3" placeholder="Insira uma descrição detalhada do produto de luxo..." class="admin-textarea"></textarea>
+              </div>
+
               <div class="drawer-footer-actions">
                 <button type="button" class="admin-secondary-btn" @click="closeProductDrawer">Cancelar</button>
                 <button type="submit" class="admin-primary-btn w-full" :disabled="formLoading">
@@ -228,6 +284,8 @@
         </div>
       </div>
     </transition>
+
+    <!-- Delete confirmation is now inline per row (see actions-cell above) -->
   </div>
 </template>
 
@@ -241,6 +299,10 @@ const productSearch = ref('')
 const showProductDrawer = ref(false)
 const editingProduct = ref(null)
 const formLoading = ref(false)
+
+// Custom Delete Modal State
+const showDeleteModal = ref(false)
+const productToDelete = ref(null)
 
 const sizeOptions = ['PP', 'P', 'M', 'G', 'GG', 'XGG', '34', '36', '38', '40', '42', '44']
 
@@ -267,7 +329,10 @@ const productForm = reactive({
   badgeLabel: '',
   badgeType: 'new',
   sizes: [],
-  image: null
+  image: null,
+  description: '',
+  stock: 10,
+  active: true
 })
 
 const fileInput = ref(null)
@@ -306,6 +371,9 @@ function openProductDrawer(prod = null) {
     productForm.badgeType = prod.badge ? prod.badge.type : 'new'
     productForm.sizes = [...prod.sizes]
     productForm.image = prod.image || null
+    productForm.description = prod.description || ''
+    productForm.stock = prod.stock !== undefined ? parseInt(prod.stock) : 10
+    productForm.active = prod.active !== false && prod.active !== 0
   } else {
     editingProduct.value = null
     productForm.name = ''
@@ -321,6 +389,9 @@ function openProductDrawer(prod = null) {
     productForm.badgeType = 'new'
     productForm.sizes = ['P', 'M', 'G']
     productForm.image = null
+    productForm.description = ''
+    productForm.stock = 15
+    productForm.active = true
   }
   showProductDrawer.value = true
 }
@@ -362,7 +433,10 @@ async function saveProduct() {
     rating: editingProduct.value ? editingProduct.value.rating : 5.0,
     reviews: editingProduct.value ? editingProduct.value.reviews : 1,
     marca: productForm.brand,
-    image: productForm.image
+    image: productForm.image,
+    description: productForm.description,
+    stock: parseInt(productForm.stock) || 0,
+    active: productForm.active
   }
 
   if (editingProduct.value) {
@@ -395,18 +469,32 @@ async function saveProduct() {
   closeProductDrawer()
 }
 
-async function confirmDeleteProduct(prod) {
-  if (confirm(`Tem certeza que deseja excluir o produto "${prod.name}" do catálogo?`)) {
-    const success = await deleteProduct(prod.id)
-    if (success) {
-      emit('show-toast', 'Produto removido do catálogo.')
-      emit('add-log', {
-        text: `Elizabeth D. excluiu o produto: ${prod.name}`,
-        time: 'Agora',
-        type: 'info'
-      })
-    }
+// CUSTOM DELETION MODAL LOGIC
+function confirmDeleteProduct(prod) {
+  productToDelete.value = prod
+  showDeleteModal.value = true
+}
+
+function closeDeleteModal() {
+  showDeleteModal.value = false
+  productToDelete.value = null
+}
+
+async function handleDeleteProduct() {
+  if (!productToDelete.value) return
+  const prod = productToDelete.value
+  const success = await deleteProduct(prod.id)
+  if (success) {
+    emit('show-toast', 'Produto removido do catálogo.')
+    emit('add-log', {
+      text: `Elizabeth D. excluiu o produto: ${prod.name}`,
+      time: 'Agora',
+      type: 'info'
+    })
+  } else {
+    emit('show-toast', 'Erro ao remover produto do catálogo.')
   }
+  closeDeleteModal()
 }
 </script>
 
@@ -543,6 +631,28 @@ async function confirmDeleteProduct(prod) {
   color: #a89880;
 }
 
+.table-stock-indicator {
+  display: inline-block;
+  padding: 4px 8px;
+  background: rgba(139, 111, 71, 0.1);
+  border: 1px solid rgba(139, 111, 71, 0.2);
+  border-radius: 2px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #a89880;
+}
+.table-stock-indicator.low {
+  background: rgba(192, 113, 74, 0.1);
+  border-color: rgba(192, 113, 74, 0.3);
+  color: #c0714a;
+}
+.table-stock-indicator.out {
+  background: rgba(168, 152, 128, 0.05);
+  border-color: rgba(168, 152, 128, 0.15);
+  color: #5c4d43;
+}
+
 .text-right {
   text-align: right;
 }
@@ -613,7 +723,74 @@ async function confirmDeleteProduct(prod) {
 
 .actions-cell {
   white-space: nowrap;
+  min-width: 180px;
 }
+
+.row-normal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* INLINE DELETE CONFIRMATION */
+.row-delete-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 6px 10px;
+  background: rgba(201, 147, 138, 0.08);
+  border: 1px solid rgba(201, 147, 138, 0.3);
+  border-radius: 4px;
+  animation: rowConfirmIn 0.18s ease;
+}
+
+@keyframes rowConfirmIn {
+  from { opacity: 0; transform: translateX(6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.row-confirm-label {
+  font-size: 12px;
+  color: #c9938a;
+  font-weight: 500;
+  white-space: nowrap;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.row-confirm-yes {
+  background: #c9938a;
+  color: #fff;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 3px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.row-confirm-yes:hover { background: #d8a49c; }
+
+.row-confirm-no {
+  background: none;
+  color: #a89880;
+  border: 1px solid #2d231b;
+  padding: 4px 12px;
+  border-radius: 3px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.row-confirm-no:hover { border-color: #8b6f47; color: #faf8f5; }
+
+.row-confirm-fade-enter-active,
+.row-confirm-fade-leave-active { transition: opacity 0.15s ease; }
+.row-confirm-fade-enter-from,
+.row-confirm-fade-leave-to { opacity: 0; }
 
 .table-action-btn {
   background: none;
@@ -621,7 +798,7 @@ async function confirmDeleteProduct(prod) {
   cursor: pointer;
   padding: 6px;
   border-radius: 4px;
-  margin-left: 6px;
+  margin-left: 2px;
   transition: all 0.2s;
 }
 
@@ -971,5 +1148,260 @@ async function confirmDeleteProduct(prod) {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* DELETE MODAL STYLING — moved to global block below */
+
+/* CUSTOM SWITCH */
+.active-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 42px;
+}
+
+.switch-lbl {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+
+.switch-lbl input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider-switch {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #120d0a;
+  border: 1px solid #2d231b;
+  transition: .3s;
+  border-radius: 34px;
+}
+
+.slider-switch:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #a89880;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+.switch-lbl input:checked + .slider-switch {
+  background-color: rgba(139, 111, 71, 0.2);
+  border-color: #8b6f47;
+}
+
+.switch-lbl input:checked + .slider-switch:before {
+  transform: translateX(22px);
+  background-color: #8b6f47;
+}
+
+.active-status-text {
+  font-size: 12.5px;
+  color: #faf8f5;
+  font-weight: 500;
+}
+
+/* READONLY INPUT */
+.readonly-input {
+  background: #120d0a !important;
+  border-color: #2d231b !important;
+  color: #8b6f47 !important;
+  cursor: not-allowed;
+  font-weight: 600;
+}
+
+/* TEXTAREA */
+.admin-textarea {
+  background: #120d0a;
+  border: 1px solid #2d231b;
+  border-radius: 2px;
+  padding: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px;
+  color: #faf8f5;
+  outline: none;
+  resize: vertical;
+  transition: all 0.25s;
+}
+
+.admin-textarea:focus {
+  border-color: #8b6f47;
+  background: #251d17;
+}
+
+.admin-form-group input[type="number"] {
+  background: #120d0a;
+  border: 1px solid #2d231b;
+  border-radius: 2px;
+  padding: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px;
+  color: #faf8f5;
+  outline: none;
+  transition: all 0.25s;
+}
+
+.admin-form-group input[type="number"]:focus {
+  border-color: #8b6f47;
+  background: #251d17;
+}
+
+/* DRAWER QUICK DELETE */
+.drawer-delete-action-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0 24px;
+}
+
+.drawer-delete-btn {
+  background: rgba(201, 147, 138, 0.08);
+  border: 1px solid rgba(201, 147, 138, 0.25);
+  color: #c9938a;
+  padding: 10px 24px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.25s;
+}
+
+.drawer-delete-btn:hover {
+  background: rgba(234, 67, 53, 0.12);
+  border-color: #ea4335;
+  color: #ea4335;
+}
+</style>
+
+<!-- Modal styles are global because the element is teleported outside the component tree -->
+<style>
+/* DELETE CONFIRMATION MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,20,16,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-card {
+  background: #1a1410;
+  border: 1px solid #2d231b;
+  width: 100%;
+  max-width: 400px;
+  margin: 16px;
+  padding: 32px;
+  border-radius: 4px;
+  text-align: center;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  animation: modalScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalScale {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-icon-wrap {
+  width: 54px;
+  height: 54px;
+  background: rgba(201, 147, 138, 0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.modal-delete-icon {
+  color: #c9938a;
+}
+
+.modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #faf8f5;
+  margin-bottom: 12px;
+}
+
+.modal-desc {
+  font-size: 13.5px;
+  color: #a89880;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.modal-cancel-btn {
+  width: 100%;
+  max-width: 280px;
+  background: none;
+  border: 1px solid #2d231b;
+  color: #a89880;
+  padding: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.modal-cancel-btn:hover {
+  border-color: #8b6f47;
+  color: #faf8f5;
+}
+
+.modal-confirm-btn {
+  width: 100%;
+  max-width: 280px;
+  background: #c9938a;
+  border: 1px solid #c9938a;
+  color: #fff;
+  padding: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.modal-confirm-btn:hover {
+  background: #d8a49c;
+  border-color: #d8a49c;
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
 }
 </style>

@@ -221,7 +221,7 @@
 import { ref, computed } from 'vue'
 import AuthModal from '../Shared/AuthModal.vue'
 import ProfileModal from '../Shared/ProfileModal.vue'
-import { currentUser, cartItems, removeFromCart, clearCart, searchQuery, showOnlyFavorites } from '../../store'
+import { currentUser, cartItems, removeFromCart, clearCart, searchQuery, showOnlyFavorites, decreaseProductsStock } from '../../store'
 
 function handleFavoritesClick() {
   if (!currentUser.value) {
@@ -274,8 +274,10 @@ function toggleMobileCat(label) {
 function removeItem(id) {
   removeFromCart(id)
 }
-function handleCheckout() {
+async function handleCheckout() {
   if (cartItems.value.length === 0) return
+  const ids = cartItems.value.map(i => i.productId)
+  await decreaseProductsStock(ids)
   clearCart()
   cartOpen.value = false
   checkoutSuccess.value = true

@@ -33,6 +33,7 @@ export interface User {
 
 export interface CartItem {
   id: number
+  productId: number
   name: string
   size: string
   price: string
@@ -44,6 +45,7 @@ export const cartItems = ref<CartItem[]>([])
 export function addToCart(product: any, size: string) {
   const newItem: CartItem = {
     id: cartItems.value.length ? Math.max(...cartItems.value.map(i => i.id)) + 1 : 1,
+    productId: product.id,
     name: product.name,
     size: size,
     price: product.price,
@@ -58,6 +60,25 @@ export function removeFromCart(id: number) {
 
 export function clearCart() {
   cartItems.value = []
+}
+
+export async function decreaseProductsStock(productIds: number[]) {
+  console.log('◈ Frontend decreaseProductsStock productIds:', productIds)
+  try {
+    const res = await fetch('/api/products/decrease-stock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productIds })
+    })
+    console.log('◈ Frontend decreaseProductsStock response status:', res.status)
+    if (res.ok) {
+      await fetchProducts()
+      return true
+    }
+  } catch (e) {
+    console.error('Error calling decrease-stock endpoint:', e)
+  }
+  return false
 }
 
 export const currentRoute = ref<string>(window.location.hash || '#/')

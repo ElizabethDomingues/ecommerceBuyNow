@@ -97,6 +97,7 @@
             @toggle-wishlist="toggleWishlist"
             @add-to-cart="addToCart"
             @quick-add-to-cart="quickAddToCart"
+            @quick-view="openQuickView"
           />
         </div>
 
@@ -132,6 +133,100 @@
 
     <!-- PREMIUM FOOTER -->
     <StoreFooter />
+
+    <!-- QUICK VIEW DETAILS MODAL -->
+    <transition name="modal-fade">
+      <div v-if="selectedQuickViewProduct" class="qv-overlay" @click.self="closeQuickView">
+        <div class="qv-card">
+          <button class="qv-close-btn" @click="closeQuickView">✕</button>
+          
+          <div class="qv-content">
+            <!-- Left: Media stage -->
+            <div class="qv-media-stage" :style="{ background: selectedQuickViewProduct.color }">
+              <div class="qv-media-shadow" :style="{ background: selectedQuickViewProduct.color2 }"></div>
+              <img v-if="selectedQuickViewProduct.image" :src="selectedQuickViewProduct.image" class="qv-img" />
+              <svg v-else class="qv-silhouette" viewBox="0 0 120 180" fill="none">
+                <path :d="selectedQuickViewProduct.shape" :fill="selectedQuickViewProduct.shapeColor || '#8b6f47'" opacity="0.65"/>
+              </svg>
+            </div>
+            
+            <!-- Right: Info -->
+            <div class="qv-info">
+              <span class="qv-brand">{{ selectedQuickViewProduct.brand }}</span>
+              <h2 class="qv-name">{{ selectedQuickViewProduct.name }}</h2>
+              
+              <div class="qv-price-wrap">
+                <span v-if="selectedQuickViewProduct.originalPrice" class="qv-price-orig">{{ selectedQuickViewProduct.originalPrice }}</span>
+                <span class="qv-price-curr" :class="{ sale: selectedQuickViewProduct.originalPrice }">{{ selectedQuickViewProduct.price }}</span>
+                <span class="qv-installments">{{ selectedQuickViewProduct.installments }}</span>
+              </div>
+              
+              <!-- Elegant Quick View Stock Display -->
+              <div class="qv-stock-banner" :class="{ 'low-stock': selectedQuickViewProduct.stock <= 5, 'out-of-stock': selectedQuickViewProduct.stock === 0 }">
+                <span class="qv-stock-icon">◈</span>
+                <span v-if="selectedQuickViewProduct.stock === 0">Produto indisponível em estoque</span>
+                <span v-else-if="selectedQuickViewProduct.stock <= 5">Apenas {{ selectedQuickViewProduct.stock }} unidades restantes no estoque!</span>
+                <span v-else>{{ selectedQuickViewProduct.stock }} unidades disponíveis em estoque</span>
+              </div>
+              
+              <div class="qv-divider"></div>
+              
+              <div class="qv-section">
+                <h4 class="qv-section-title">Descrição</h4>
+                <p class="qv-desc">
+                  {{ selectedQuickViewProduct.description || 'Uma peça sofisticada e única da alta costura AURÊ, perfeita para expressar sua elegância natural com conforto e exclusividade.' }}
+                </p>
+              </div>
+              
+              <div class="qv-section">
+                <h4 class="qv-section-title">Cores Disponíveis</h4>
+                <div class="qv-colors-grid">
+                  <div 
+                    v-for="c in selectedQuickViewProduct.colorOptions" 
+                    :key="c" 
+                    class="qv-color-wrapper"
+                  >
+                    <span class="qv-color-dot" :style="{ background: c }"></span>
+                    <span class="qv-color-name">{{ getColorName(c) }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="qv-section">
+                <h4 class="qv-section-title">Selecione o Tamanho</h4>
+                <div v-if="selectedQuickViewProduct.stock > 0" class="qv-sizes-grid">
+                  <button 
+                    v-for="sz in selectedQuickViewProduct.sizes" 
+                    :key="sz" 
+                    class="qv-size-btn"
+                    :class="{ active: selectedSize === sz }"
+                    @click="selectedSize = sz"
+                  >
+                    {{ sz }}
+                  </button>
+                </div>
+                <div v-else class="qv-out-of-stock-msg">
+                  Este produto encontra-se temporariamente esgotado.
+                </div>
+              </div>
+              
+              <button 
+                class="qv-add-btn" 
+                @click="addQuickViewToCart"
+                :disabled="selectedQuickViewProduct.stock === 0 || !selectedSize"
+              >
+                <svg v-if="selectedQuickViewProduct.stock > 0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+                {{ selectedQuickViewProduct.stock === 0 ? 'Produto Esgotado' : (selectedSize ? `Adicionar Tamanho ${selectedSize} à Sacola` : 'Escolha um Tamanho') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <transition name="toast">
       <div v-if="toast" class="toast">
@@ -176,6 +271,26 @@ const perPage     = 9
 const hoveredId   = ref(null)
 const toast       = ref(null)
 const showLoginWarningModal = ref(false)
+
+// Quick View Modal State
+const selectedQuickViewProduct = ref(null)
+const selectedSize = ref(null)
+
+function openQuickView(product) {
+  selectedQuickViewProduct.value = product
+  selectedSize.value = product.sizes && product.sizes.length && product.stock > 0 ? product.sizes[0] : null
+}
+
+function closeQuickView() {
+  selectedQuickViewProduct.value = null
+  selectedSize.value = null
+}
+
+function addQuickViewToCart() {
+  if (!selectedQuickViewProduct.value || !selectedSize.value) return
+  addToCart(selectedQuickViewProduct.value, selectedSize.value)
+  closeQuickView()
+}
 
 const wishlist = computed(() => {
   if (currentUser.value) {
@@ -759,5 +874,329 @@ function showToast(msg) {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* QUICK VIEW MODAL */
+.qv-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,20,16,0.6);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.qv-card {
+  background: #faf8f5;
+  width: 100%;
+  max-width: 900px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(26, 20, 16, 0.25);
+  position: relative;
+  animation: qvScale 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes qvScale {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.qv-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #faf8f5;
+  border: 1px solid #e8e0d5;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3d2f1e;
+  font-size: 14px;
+  z-index: 10;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.qv-close-btn:hover {
+  background: #1a1410;
+  color: #faf8f5;
+  border-color: #1a1410;
+}
+
+.qv-content {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  min-height: 520px;
+}
+
+@media (max-width: 768px) {
+  .qv-content {
+    grid-template-columns: 1fr;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .qv-media-stage {
+    height: 300px !important;
+  }
+  .qv-info {
+    padding: 24px !important;
+  }
+}
+
+.qv-media-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  height: 100%;
+  background: #e8e0d5;
+}
+
+.qv-media-shadow {
+  position: absolute;
+  inset: 0;
+  opacity: 0.25;
+}
+
+.qv-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 2;
+}
+
+.qv-silhouette {
+  width: 60%;
+  height: 80%;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.15));
+}
+
+.qv-info {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 580px;
+}
+
+.qv-brand {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #8b6f47;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.qv-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 500;
+  color: #1a1410;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.qv-price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.qv-price-orig {
+  font-size: 14px;
+  color: #a89880;
+  text-decoration: line-through;
+}
+
+.qv-price-curr {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1a1410;
+}
+
+.qv-price-curr.sale {
+  color: #c0714a;
+}
+
+.qv-installments {
+  font-size: 12px;
+  color: #8b6f47;
+  margin-left: auto;
+}
+
+.qv-divider {
+  height: 1px;
+  background: #e8e0d5;
+  margin-bottom: 24px;
+}
+
+.qv-section {
+  margin-bottom: 24px;
+}
+
+.qv-section-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #a89880;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.qv-desc {
+  font-size: 13.5px;
+  color: #4a3e35;
+  line-height: 1.6;
+}
+
+.qv-colors-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.qv-color-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fdfcfb;
+  border: 1px solid #e8e0d5;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.qv-color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.8);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.12);
+}
+
+.qv-color-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: #3d2f1e;
+}
+
+.qv-sizes-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.qv-size-btn {
+  min-width: 42px;
+  height: 42px;
+  background: none;
+  border: 1px solid #e8e0d5;
+  color: #3d2f1e;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.qv-size-btn:hover {
+  border-color: #8b6f47;
+  color: #8b6f47;
+}
+
+.qv-size-btn.active {
+  background: #1a1410;
+  border-color: #1a1410;
+  color: #faf8f5;
+}
+
+.qv-add-btn {
+  width: 100%;
+  background: #1a1410;
+  color: #faf8f5;
+  border: 1px solid #1a1410;
+  padding: 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.25s;
+  margin-top: auto;
+}
+
+.qv-add-btn:hover:not(:disabled) {
+  background: transparent;
+  color: #1a1410;
+}
+
+.qv-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.qv-out-of-stock-msg {
+  font-size: 13px;
+  color: #c0714a;
+  background: rgba(192, 113, 74, 0.06);
+  border: 1px dashed rgba(192, 113, 74, 0.3);
+  padding: 12px 16px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.qv-stock-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8b6f47;
+  background: rgba(139, 111, 71, 0.06);
+  border: 1px solid rgba(139, 111, 71, 0.15);
+  padding: 8px 12px;
+  border-radius: 2px;
+  margin-bottom: 24px;
+  letter-spacing: 0.02em;
+}
+
+.qv-stock-banner.low-stock {
+  color: #c0714a;
+  background: rgba(192, 113, 74, 0.06);
+  border-color: rgba(192, 113, 74, 0.2);
+}
+
+.qv-stock-banner.out-of-stock {
+  color: #a89880;
+  background: rgba(168, 152, 128, 0.06);
+  border-color: rgba(168, 152, 128, 0.2);
+}
+
+.qv-stock-icon {
+  font-size: 10px;
 }
 </style>

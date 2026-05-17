@@ -5,7 +5,8 @@
     @mouseenter="hoveredId = product.id"
     @mouseleave="hoveredId = null"
   >
-    <span v-if="product.badge" class="prod-badge" :class="product.badge.type">{{ product.badge.label }}</span>
+    <span v-if="product.stock === 0" class="prod-badge out-of-stock">Esgotado</span>
+    <span v-else-if="product.badge" class="prod-badge" :class="product.badge.type">{{ product.badge.label }}</span>
 
     <div class="prod-img-wrap">
       <div class="prod-img" :style="{ background: product.color }">
@@ -21,13 +22,13 @@
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
         </button>
-        <button class="prod-action-btn" title="Ver rapidamente" @click.stop>
+        <button class="prod-action-btn" title="Ver rapidamente" @click.stop="$emit('quickView', product)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
           </svg>
         </button>
       </div>
-      <div class="quick-add" :class="{ visible: hoveredId === product.id }">
+      <div v-if="product.stock > 0" class="quick-add" :class="{ visible: hoveredId === product.id }">
         <button
           v-for="sz in product.sizes.slice(0,4)"
           :key="sz"
@@ -63,13 +64,23 @@
         <span v-if="product.installments" class="price-installments">{{ product.installments }}</span>
       </div>
       
-      <button class="add-to-bag-btn" @click.stop="$emit('quickAddToCart', product)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <div class="prod-stock-indicator">
+        <span v-if="product.stock === 0" class="stock-badge out-of-stock">Sem estoque</span>
+        <span v-else-if="product.stock <= 5" class="stock-badge low-stock">Apenas {{ product.stock }} unidades!</span>
+        <span v-else class="stock-badge in-stock">{{ product.stock }} unidades em estoque</span>
+      </div>
+      
+      <button 
+        class="add-to-bag-btn" 
+        :disabled="product.stock === 0"
+        @click.stop="product.stock > 0 ? $emit('quickAddToCart', product) : null"
+      >
+        <svg v-if="product.stock > 0" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
           <line x1="3" y1="6" x2="21" y2="6"/>
           <path d="M16 10a4 4 0 0 1-8 0"/>
         </svg>
-        Adicionar à Sacola
+        {{ product.stock > 0 ? 'Adicionar à Sacola' : 'Esgotado' }}
       </button>
     </div>
   </article>
@@ -84,7 +95,7 @@ const props = defineProps({
   wishlist: Array
 })
 
-const emit = defineEmits(['toggleWishlist', 'addToCart', 'quickAddToCart'])
+const emit = defineEmits(['toggleWishlist', 'addToCart', 'quickAddToCart', 'quickView'])
 
 const hoveredId = ref(null)
 </script>
@@ -300,10 +311,53 @@ const hoveredId = ref(null)
   color: #1a1410;
   opacity: 1;
 }
+.add-to-bag-btn:disabled {
+  background: #f0ece6;
+  border-color: #e0d5c8;
+  color: #a89880;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.add-to-bag-btn:hover:disabled {
+  background: #f0ece6;
+  color: #a89880;
+  border-color: #e0d5c8;
+}
+.prod-badge.out-of-stock {
+  background: #5c4d43;
+  color: #d4b896;
+}
 .add-to-bag-btn svg {
   transition: transform 0.3s;
 }
 .add-to-bag-btn:hover svg {
   transform: translateY(-2px);
+}
+
+.prod-stock-indicator {
+  margin-top: 8px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+}
+.stock-badge {
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+.stock-badge.in-stock {
+  color: #8a8278;
+}
+.stock-badge.low-stock {
+  color: #c0714a;
+  animation: pulseLowStock 2s infinite ease-in-out;
+}
+.stock-badge.out-of-stock {
+  color: #c0a888;
+}
+
+@keyframes pulseLowStock {
+  0% { opacity: 0.85; }
+  50% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0.85; }
 }
 </style>

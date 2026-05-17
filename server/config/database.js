@@ -50,7 +50,6 @@ export async function initDatabase() {
     initJsonDatabase()
   }
 }
-
 async function createMysqlTables() {
   const queryProducts = `
     CREATE TABLE IF NOT EXISTS products (
@@ -71,7 +70,10 @@ async function createMysqlTables() {
       reviews INT DEFAULT 0,
       categoria VARCHAR(100) NOT NULL,
       marca VARCHAR(100) NOT NULL,
-      image LONGTEXT
+      image LONGTEXT,
+      description TEXT,
+      stock INT DEFAULT 10,
+      active TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `
 
@@ -95,6 +97,9 @@ async function createMysqlTables() {
   try { await mysqlPool.query('ALTER TABLE users ADD COLUMN password VARCHAR(255) DEFAULT NULL') } catch (e) {}
   try { await mysqlPool.query("ALTER TABLE users ADD COLUMN status VARCHAR(50) DEFAULT 'Ativo'") } catch (e) {}
   try { await mysqlPool.query('ALTER TABLE products ADD COLUMN image LONGTEXT') } catch (e) {}
+  try { await mysqlPool.query('ALTER TABLE products ADD COLUMN description TEXT') } catch (e) {}
+  try { await mysqlPool.query('ALTER TABLE products ADD COLUMN stock INT DEFAULT 10') } catch (e) {}
+  try { await mysqlPool.query('ALTER TABLE products ADD COLUMN active TINYINT(1) DEFAULT 1') } catch (e) {}
 }
 
 async function seedMysqlData() {

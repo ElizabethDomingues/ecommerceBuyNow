@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "run-p dev:frontend dev:backend",
     "dev:frontend": "vite",
-    "dev:backend": "node server.js",
+    "dev:backend": "node --watch server.js",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
