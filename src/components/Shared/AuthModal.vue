@@ -234,12 +234,16 @@ const props = defineProps({
   show: {
     type: Boolean,
     default: false
+  },
+  initialTab: {
+    type: String,
+    default: 'login'
   }
 })
 
 const emit = defineEmits(['close'])
 
-const activeTab = ref('login')
+const activeTab = ref(props.initialTab)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const loading = ref(false)
@@ -261,6 +265,7 @@ watch(() => props.show, (newVal) => {
   if (newVal) {
     document.body.style.overflow = 'hidden'
     resetForm()
+    activeTab.value = props.initialTab || 'login'
   } else {
     document.body.style.overflow = ''
   }

@@ -237,22 +237,32 @@
       </div>
     </transition>
 
+    <!-- LOGIN REQUIRED MODAL -->
     <transition name="modal-fade">
       <div v-if="showLoginWarningModal" class="warning-modal-overlay" @click.self="showLoginWarningModal = false">
         <div class="warning-modal-card" role="dialog" aria-modal="true">
           <div class="warning-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
             </svg>
           </div>
-          <h3 class="warning-title">Acesso Restrito</h3>
-          <p class="warning-subtitle">Faça login para utilizar essa opção</p>
-          <button class="warning-btn-action" @click="showLoginWarningModal = false">
-            Entendido
-          </button>
+          <h3 class="warning-title">Acesso Necessário</h3>
+          <p class="warning-subtitle">Para adicionar itens à sacola, faça login ou crie uma conta grátis na AURÊ.</p>
+          <div class="warning-actions">
+            <button class="warning-btn-primary" @click="openAuthFromWarning('login')">
+              Entrar na minha conta
+            </button>
+            <button class="warning-btn-secondary" @click="openAuthFromWarning('register')">
+              Criar conta grátis
+            </button>
+          </div>
+          <button class="warning-btn-dismiss" @click="showLoginWarningModal = false">Agora não</button>
         </div>
       </div>
     </transition>
+
+    <!-- AUTH MODAL -->
+    <AuthModal :show="showAuthModal" @close="showAuthModal = false" :initial-tab="authModalTab" />
   </div>
 </template>
 
@@ -261,6 +271,7 @@ import { ref, computed, reactive } from 'vue'
 import StoreFooter from '../components/Store/StoreFooter.vue'
 import SidebarFilter from '../components/Store/SidebarFilter.vue'
 import ProductCard from '../components/Store/ProductCard.vue'
+import AuthModal from '../components/Shared/AuthModal.vue'
 import { products, SHAPES, addToCart as storeAddToCart, searchQuery, currentUser, updateUser, showOnlyFavorites } from '../store'
 
 const gridCols    = ref(3)
@@ -271,6 +282,8 @@ const perPage     = 9
 const hoveredId   = ref(null)
 const toast       = ref(null)
 const showLoginWarningModal = ref(false)
+const showAuthModal = ref(false)
+const authModalTab  = ref('login')
 
 // Quick View Modal State
 const selectedQuickViewProduct = ref(null)
@@ -483,13 +496,26 @@ function toggleWishlist(id) {
   updateUser(currentUser.value.id, { favorites: currentFavs })
 }
 function addToCart(product, size) {
+  if (!currentUser.value) {
+    showLoginWarningModal.value = true
+    return
+  }
   storeAddToCart(product, size)
   showToast(`${product.name} (Tamanho ${size}) adicionado à sacola`)
 }
 function quickAddToCart(product) {
+  if (!currentUser.value) {
+    showLoginWarningModal.value = true
+    return
+  }
   const size = product.sizes[0] || 'M'
   storeAddToCart(product, size)
   showToast(`${product.name} (Tamanho ${size}) adicionado à sacola`)
+}
+function openAuthFromWarning(tab) {
+  showLoginWarningModal.value = false
+  authModalTab.value = tab
+  showAuthModal.value = true
 }
 function showToast(msg) {
   toast.value = msg
@@ -800,7 +826,15 @@ function showToast(msg) {
   margin-bottom: 28px;
 }
 
-.warning-btn-action {
+.warning-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.warning-btn-primary {
   width: 100%;
   background: #1a1410;
   color: #faf8f5;
@@ -815,11 +849,43 @@ function showToast(msg) {
   border-radius: 2px;
   transition: all 0.3s;
 }
+.warning-btn-primary:hover {
+  background: #3d2f1e;
+  border-color: #3d2f1e;
+}
 
-.warning-btn-action:hover {
+.warning-btn-secondary {
+  width: 100%;
   background: transparent;
   color: #1a1410;
+  border: 1px solid #d4c8b8;
+  padding: 13px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.3s;
 }
+.warning-btn-secondary:hover {
+  border-color: #8b6f47;
+  color: #8b6f47;
+}
+
+.warning-btn-dismiss {
+  background: none;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: #a89880;
+  cursor: pointer;
+  padding: 4px;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.warning-btn-dismiss:hover { color: #6b5543; }
 
 .favorites-banner {
   display: flex;
