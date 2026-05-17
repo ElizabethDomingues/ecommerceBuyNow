@@ -29,6 +29,39 @@ export interface User {
   date: string
 }
 
+export interface CartItem {
+  id: number
+  name: string
+  size: string
+  price: string
+  color: string
+}
+
+export const cartItems = ref<CartItem[]>([
+  { id: 1, name: 'Vestido Midi Floral', size: 'M', price: 'R$ 289,90', color: '#d4b896' },
+  { id: 2, name: 'Sandália Strappy', size: '37', price: 'R$ 199,90', color: '#c9a882' },
+  { id: 3, name: 'Bolsa Minimalista', size: 'Único', price: 'R$ 349,90', color: '#a8937a' }
+])
+
+export function addToCart(product: any, size: string) {
+  const newItem: CartItem = {
+    id: cartItems.value.length ? Math.max(...cartItems.value.map(i => i.id)) + 1 : 1,
+    name: product.name,
+    size: size,
+    price: product.price,
+    color: product.color || '#d4b896'
+  }
+  cartItems.value.push(newItem)
+}
+
+export function removeFromCart(id: number) {
+  cartItems.value = cartItems.value.filter(i => i.id !== id)
+}
+
+export function clearCart() {
+  cartItems.value = []
+}
+
 export const currentRoute = ref<string>(window.location.hash || '#/')
 
 window.addEventListener('hashchange', () => {

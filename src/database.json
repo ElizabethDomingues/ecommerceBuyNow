@@ -1,33 +1,6 @@
 {
   "products": [
     {
-      "id": 13,
-      "name": "Echarpe Seda Pura Luxo",
-      "brand": "AURE",
-      "categoria": "Blusas",
-      "price": "R$ 120,00",
-      "originalPrice": null,
-      "installments": "10x R$ 12,00",
-      "shape": "M40 10 Q60 5 80 10 L90 60 Q85 120 60 170 Q35 120 30 60 Z",
-      "shapeColor": "#8b6f47",
-      "color": "#e8ddd0",
-      "color2": "#d4c4b0",
-      "badge": null,
-      "sizes": [
-        "P",
-        "M",
-        "G"
-      ],
-      "colorOptions": [
-        "#e8ddd0",
-        "#d4c4b0",
-        "#1a1410"
-      ],
-      "rating": 5,
-      "reviews": 1,
-      "marca": "AURE"
-    },
-    {
       "id": 1,
       "name": "Vestido Midi Floral Recorte",
       "brand": "Farm Rio",

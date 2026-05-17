@@ -179,6 +179,15 @@
                 </div>
                 <span v-if="product.installments" class="price-installments">{{ product.installments }}</span>
               </div>
+              
+              <button class="add-to-bag-btn" @click.stop="quickAddToCart(product)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+                Adicionar à Sacola
+              </button>
             </div>
           </article>
         </div>
@@ -238,7 +247,7 @@
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { products, SHAPES } from './store'
+import { products, SHAPES, addToCart as storeAddToCart } from './store'
 
 const gridCols    = ref(3)
 const filtersOpen = ref(true)
@@ -346,7 +355,13 @@ function toggleWishlist(id) {
   else        { wishlist.value.push(id);     showToast('Adicionado aos favoritos ♥') }
 }
 function addToCart(product, size) {
-  showToast(`${product.name} (${size}) adicionado à sacola`)
+  storeAddToCart(product, size)
+  showToast(`${product.name} (Tamanho ${size}) adicionado à sacola`)
+}
+function quickAddToCart(product) {
+  const size = product.sizes[0] || 'M'
+  storeAddToCart(product, size)
+  showToast(`${product.name} (Tamanho ${size}) adicionado à sacola`)
 }
 function showToast(msg) {
   toast.value = msg
@@ -949,5 +964,41 @@ function showToast(msg) {
   color: #8b6f47 !important;
   font-weight: 600;
   letter-spacing: 0.05em;
+}
+
+.add-to-bag-btn {
+  width: 100%;
+  margin-top: 14px;
+  background: #1a1410;
+  color: #faf8f5;
+  border: 1px solid #1a1410;
+  padding: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.95;
+}
+
+.add-to-bag-btn:hover {
+  background: transparent;
+  color: #1a1410;
+  opacity: 1;
+}
+
+.add-to-bag-btn svg {
+  transition: transform 0.3s;
+}
+
+.add-to-bag-btn:hover svg {
+  transform: translateY(-2px);
 }
 </style>

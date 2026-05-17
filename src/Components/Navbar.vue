@@ -173,7 +173,7 @@
             <span>Total</span>
             <span>{{ cartTotal }}</span>
           </div>
-          <button class="cart-checkout">Finalizar Compra</button>
+          <button class="cart-checkout" @click="handleCheckout">Finalizar Compra</button>
           <button class="cart-continue" @click="cartOpen = false">Continuar comprando</button>
         </div>
       </div>
@@ -181,6 +181,24 @@
 
     <AuthModal :show="accountOpen" @close="accountOpen = false" />
     <ProfileModal :show="profileOpen" @close="profileOpen = false" />
+
+    <transition name="modal-fade">
+      <div v-if="checkoutSuccess" class="checkout-modal-overlay" @click.self="checkoutSuccess = false">
+        <div class="checkout-modal-card" role="dialog" aria-modal="true">
+          <div class="checkout-success-icon">
+            <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+              <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+              <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+          </div>
+          <h2 class="checkout-title">Compra Realizada!</h2>
+          <p class="checkout-subtitle">Sua compra foi concluída com sucesso. Um e-mail de confirmação foi enviado com os detalhes do seu pedido.</p>
+          <button class="checkout-btn-action" @click="checkoutSuccess = false">
+            Continuar Comprando
+          </button>
+        </div>
+      </div>
+    </transition>
   </header>
 </template>
 
@@ -188,7 +206,7 @@
 import { ref, computed } from 'vue'
 import AuthModal from './AuthModal.vue'
 import ProfileModal from './ProfileModal.vue'
-import { currentUser } from '../store'
+import { currentUser, cartItems, removeFromCart, clearCart } from '../store'
 
 const searchQuery = ref('')
 const searchOpen = ref(false)
@@ -197,6 +215,7 @@ const mobileOpen = ref(false)
 const cartOpen = ref(false)
 const accountOpen = ref(false)
 const profileOpen = ref(false)
+const checkoutSuccess = ref(false)
 const activeDropdown = ref(null)
 const activeCategory = ref('Feminino')
 const mobileCat = ref(null)
@@ -231,16 +250,11 @@ const categories = [
   { label: 'Marcas', sub: null },
 ]
 
-const cartItems = ref([
-  { id: 1, name: 'Vestido Midi Floral', size: 'M', price: 'R$ 289,90', color: '#d4b896' },
-  { id: 2, name: 'Sandália Strappy', size: '37', price: 'R$ 199,90', color: '#c9a882' },
-  { id: 3, name: 'Bolsa Minimalista', size: 'Único', price: 'R$ 349,90', color: '#a8937a' },
-])
-
 const cartCount = computed(() => cartItems.value.length)
 const cartTotal = computed(() => {
   const sum = cartItems.value.reduce((acc, item) => {
-    return acc + parseFloat(item.price.replace('R$ ', '').replace(',', '.'))
+    const cleanPrice = item.price.replace('R$ ', '').replace(/\./g, '').replace(',', '.')
+    return acc + parseFloat(cleanPrice)
   }, 0)
   return `R$ ${sum.toFixed(2).replace('.', ',')}`
 })
@@ -255,7 +269,13 @@ function toggleMobileCat(label) {
   mobileCat.value = mobileCat.value === label ? null : label
 }
 function removeItem(id) {
-  cartItems.value = cartItems.value.filter(i => i.id !== id)
+  removeFromCart(id)
+}
+function handleCheckout() {
+  if (cartItems.value.length === 0) return
+  clearCart()
+  cartOpen.value = false
+  checkoutSuccess.value = true
 }
 function closeAll() {
   mobileOpen.value = false
@@ -805,5 +825,90 @@ function closeAll() {
   .hamburger { display: flex; }
   .category-nav { display: none; }
   .logo-text { font-size: 24px; }
+}
+
+.checkout-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(26, 20, 16, 0.45);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.checkout-modal-card {
+  width: 100%;
+  max-width: 440px;
+  background: #faf8f5;
+  border: 1px solid #e8e0d5;
+  border-radius: 4px;
+  box-shadow: 0 24px 64px rgba(26, 20, 16, 0.22);
+  padding: 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.checkout-success-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #f0ece6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.checkout-success-icon .checkmark {
+  width: 44px;
+  height: 44px;
+  stroke: #8b6f47;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.checkout-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  color: #1a1410;
+  margin-bottom: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.checkout-subtitle {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: #6b5543;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.checkout-btn-action {
+  width: 100%;
+  background: #1a1410;
+  color: #faf8f5;
+  border: 1px solid #1a1410;
+  padding: 15px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+.checkout-btn-action:hover {
+  background: transparent;
+  color: #1a1410;
 }
 </style>
