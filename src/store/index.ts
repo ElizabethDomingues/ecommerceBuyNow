@@ -1,5 +1,7 @@
 import { ref } from 'vue'
 
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'
+
 export interface Product {
   id: number
   name: string
@@ -65,7 +67,7 @@ export function clearCart() {
 export async function decreaseProductsStock(productIds: number[]) {
   console.log('◈ Frontend decreaseProductsStock productIds:', productIds)
   try {
-    const res = await fetch('/api/products/decrease-stock', {
+    const res = await fetch(`${API_BASE_URL}/api/products/decrease-stock`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ productIds })
@@ -117,7 +119,7 @@ export const currentUser = ref<User | null>(getStoredUser())
 
 export async function loginAdmin(email: string, password: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const res = await fetch('/api/admin/login', {
+    const res = await fetch(`${API_BASE_URL}/api/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -148,7 +150,7 @@ export function logoutAdmin() {
 
 export async function fetchProducts() {
   try {
-    const res = await fetch('/api/products')
+    const res = await fetch(`${API_BASE_URL}/api/products`)
     if (res.ok) {
       products.value = await res.json()
     } else {
@@ -161,7 +163,7 @@ export async function fetchProducts() {
 
 export async function addProduct(payload: Omit<Product, 'id'>) {
   try {
-    const res = await fetch('/api/products', {
+    const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -178,7 +180,7 @@ export async function addProduct(payload: Omit<Product, 'id'>) {
 
 export async function updateProduct(id: number, payload: Omit<Product, 'id'>) {
   try {
-    const res = await fetch(`/api/products/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -198,7 +200,7 @@ export async function updateProduct(id: number, payload: Omit<Product, 'id'>) {
 
 export async function deleteProduct(id: number) {
   try {
-    const res = await fetch(`/api/products/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
       method: 'DELETE'
     })
     if (res.ok) {
@@ -213,7 +215,7 @@ export async function deleteProduct(id: number) {
 
 export async function fetchUsers() {
   try {
-    const res = await fetch('/api/users')
+    const res = await fetch(`${API_BASE_URL}/api/users`)
     if (res.ok) {
       users.value = await res.json()
     }
@@ -224,7 +226,7 @@ export async function fetchUsers() {
 
 export async function addUser(payload: Omit<User, 'id' | 'date'>) {
   try {
-    const res = await fetch('/api/users', {
+    const res = await fetch(`${API_BASE_URL}/api/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -242,7 +244,7 @@ export async function addUser(payload: Omit<User, 'id' | 'date'>) {
 
 export async function updateUser(id: number, payload: Partial<Omit<User, 'id' | 'date'>>) {
   try {
-    const res = await fetch(`/api/users/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/users/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -270,7 +272,7 @@ export async function updateUser(id: number, payload: Partial<Omit<User, 'id' | 
 
 export async function deleteUser(id: number) {
   try {
-    const res = await fetch(`/api/users/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/users/${id}`, {
       method: 'DELETE'
     })
     if (res.ok) {
