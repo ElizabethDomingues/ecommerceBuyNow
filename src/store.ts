@@ -28,6 +28,7 @@ export interface User {
   role: string
   date: string
   favorites?: number[]
+  status?: string
 }
 
 export interface CartItem {
@@ -61,6 +62,7 @@ export function clearCart() {
 
 export const currentRoute = ref<string>(window.location.hash || '#/')
 export const searchQuery = ref<string>('')
+export const showOnlyFavorites = ref<boolean>(false)
 
 window.addEventListener('hashchange', () => {
   currentRoute.value = window.location.hash || '#/'
@@ -217,7 +219,7 @@ export async function addUser(payload: Omit<User, 'id' | 'date'>) {
   }
 }
 
-export async function updateUser(id: number, payload: Partial<Omit<User, 'id' | 'role' | 'date'>>) {
+export async function updateUser(id: number, payload: Partial<Omit<User, 'id' | 'date'>>) {
   try {
     const res = await fetch(`/api/users/${id}`, {
       method: 'PUT',
@@ -231,7 +233,12 @@ export async function updateUser(id: number, payload: Partial<Omit<User, 'id' | 
         users.value[index] = updatedUser
       }
       if (currentUser.value && currentUser.value.id === id) {
-        currentUser.value = updatedUser
+        if (updatedUser.status === 'Inativo') {
+          currentUser.value = null
+          localStorage.removeItem('adminUser')
+        } else {
+          currentUser.value = updatedUser
+        }
       }
       return updatedUser
     }

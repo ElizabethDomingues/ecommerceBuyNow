@@ -24,9 +24,9 @@ const SHAPES = {
 }
 
 const defaultUsers = [
-  { name: 'Elizabeth Domingues', email: 'eliza@example.com', phone: '(11) 99999-9999', role: 'Administrador', date: '17/05/2026', password: 'admin' },
-  { name: 'Ana Silva', email: 'ana@example.com', phone: '(11) 98888-8888', role: 'Cliente', date: '16/05/2026', password: null },
-  { name: 'Carlos Santos', email: 'carlos@example.com', phone: '(21) 97777-7777', role: 'Cliente', date: '15/05/2026', password: null }
+  { name: 'Elizabeth Domingues', email: 'eliza@example.com', phone: '(11) 99999-9999', role: 'Administrador', date: '17/05/2026', password: 'admin', status: 'Ativo' },
+  { name: 'Ana Silva', email: 'ana@example.com', phone: '(11) 98888-8888', role: 'Cliente', date: '16/05/2026', password: null, status: 'Ativo' },
+  { name: 'Carlos Santos', email: 'carlos@example.com', phone: '(21) 97777-7777', role: 'Cliente', date: '15/05/2026', password: null, status: 'Ativo' }
 ]
 
 const defaultProducts = [
@@ -323,7 +323,8 @@ async function createMysqlTables() {
       role VARCHAR(50) DEFAULT 'Cliente',
       date VARCHAR(50) NOT NULL,
       password VARCHAR(255) DEFAULT NULL,
-      favorites TEXT
+      favorites TEXT,
+      status VARCHAR(50) DEFAULT 'Ativo'
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `
 
@@ -335,6 +336,10 @@ async function createMysqlTables() {
   }
   try {
     await mysqlPool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT NULL')
+  } catch (e) {
+  }
+  try {
+    await mysqlPool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Ativo'")
   } catch (e) {
   }
 }
@@ -363,8 +368,8 @@ async function seedMysqlData() {
     console.log('🌱 Populando tabela "users" com administradores padrão no MySQL...')
     for (const u of defaultUsers) {
       await mysqlPool.query(
-        `INSERT INTO users (name, email, phone, role, date, password) VALUES (?, ?, ?, ?, ?, ?)`,
-        [u.name, u.email, u.phone, u.role, u.date, u.password || null]
+        `INSERT INTO users (name, email, phone, role, date, password, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [u.name, u.email, u.phone, u.role, u.date, u.password || null, u.status || 'Ativo']
       )
     }
   } else {
@@ -373,6 +378,9 @@ async function seedMysqlData() {
       await mysqlPool.query(
         `UPDATE users SET password = ? WHERE email = ? AND (password IS NULL OR password = '')`,
         ['admin', 'eliza@example.com']
+      )
+      await mysqlPool.query(
+        `UPDATE users SET status = 'Ativo' WHERE status IS NULL OR status = ''`
       )
     } catch (err) {
       console.error('Falha ao migrar senha do admin no MySQL:', err)
@@ -386,7 +394,7 @@ function initJsonDatabase() {
     const seededData = { products: defaultProducts.map((p, i) => ({ id: i + 1, ...p })), users: defaultUsers.map((u, i) => ({ id: i + 1, ...u })) }
     fs.writeFileSync(DB_JSON_PATH, JSON.stringify(seededData, null, 2), 'utf-8')
   } else {
-    // Migração JSON: Garante que o administrador padrão eliza@example.com tenha senha no JSON
+    // Migração JSON: Garante que o administrador padrão eliza@example.com tenha senha no JSON e todos tenham status
     try {
       const data = loadJsonData()
       let updated = false
@@ -395,11 +403,15 @@ function initJsonDatabase() {
           u.password = 'admin'
           updated = true
         }
+        if (!u.status) {
+          u.status = 'Ativo'
+          updated = true
+        }
         return u
       })
       if (updated) {
         saveJsonData(data)
-        console.log('✔ Migração JSON: Senha adicionada para eliza@example.com')
+        console.log('✔ Migração JSON: Senha e status atualizados.')
       }
     } catch (err) {
       console.error('Falha ao migrar JSON database:', err)
@@ -545,8 +557,12 @@ app.post('/api/admin/login', async (req, res) => {
         return res.status(401).json({ error: 'Credenciais inválidas ou usuário não cadastrado.' })
       }
 
-      if (user.role !== 'Administrador') {
-        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem acessar o painel.' })
+      if (user.status === 'Inativo') {
+        return res.status(403).json({ error: 'Acesso bloqueado. Esta conta administrativa está inativa.' })
+      }
+
+      if (user.role !== 'Administrador' && user.role !== 'Estoquista') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas administradores ou estoquistas podem acessar o painel.' })
       }
 
       const correctPassword = user.password || 'admin'
@@ -573,8 +589,12 @@ app.post('/api/admin/login', async (req, res) => {
     return res.status(401).json({ error: 'Credenciais inválidas ou usuário não cadastrado.' })
   }
 
-  if (user.role !== 'Administrador') {
-    return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem acessar o painel.' })
+  if (user.status === 'Inativo') {
+    return res.status(403).json({ error: 'Acesso bloqueado. Esta conta administrativa está inativa.' })
+  }
+
+  if (user.role !== 'Administrador' && user.role !== 'Estoquista') {
+    return res.status(403).json({ error: 'Acesso negado. Apenas administradores ou estoquistas podem acessar o painel.' })
   }
 
   const correctPassword = user.password || 'admin'
@@ -596,7 +616,8 @@ app.get('/api/users', async (req, res) => {
       const [rows] = await mysqlPool.query('SELECT * FROM users ORDER BY id DESC')
       const formatted = rows.map(r => ({
         ...r,
-        favorites: r.favorites ? JSON.parse(r.favorites) : []
+        favorites: r.favorites ? JSON.parse(r.favorites) : [],
+        status: r.status || 'Ativo'
       }))
       return res.json(formatted)
     } catch (e) {
@@ -605,7 +626,7 @@ app.get('/api/users', async (req, res) => {
   }
 
   const db = loadJsonData()
-  const formatted = db.users.map(u => ({ ...u, favorites: u.favorites || [] }))
+  const formatted = db.users.map(u => ({ ...u, favorites: u.favorites || [], status: u.status || 'Ativo' }))
   res.json(formatted)
 })
 
@@ -613,14 +634,15 @@ app.post('/api/users', async (req, res) => {
   const u = req.body
   const dateStr = new Date().toLocaleDateString('pt-BR')
   const favs = u.favorites || []
+  const status = u.status || 'Ativo'
 
   if (!useJsonFallback) {
     try {
       const [result] = await mysqlPool.query(
-        `INSERT INTO users (name, email, phone, role, date, favorites) VALUES (?, ?, ?, ?, ?, ?)`,
-        [u.name, u.email, u.phone, u.role || 'Cliente', dateStr, JSON.stringify(favs)]
+        `INSERT INTO users (name, email, phone, role, date, favorites, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [u.name, u.email, u.phone, u.role || 'Cliente', dateStr, JSON.stringify(favs), status]
       )
-      const newUser = { id: result.insertId, ...u, date: dateStr, favorites: favs }
+      const newUser = { id: result.insertId, ...u, date: dateStr, favorites: favs, status }
       return res.status(201).json(newUser)
     } catch (e) {
       console.error('MySQL Insert User Error, falling back to JSON:', e)
@@ -632,7 +654,8 @@ app.post('/api/users', async (req, res) => {
     id: db.users.length ? Math.max(...db.users.map(u => u.id)) + 1 : 1,
     ...u,
     date: dateStr,
-    favorites: favs
+    favorites: favs,
+    status
   }
   db.users.unshift(newUser)
   saveJsonData(db)
@@ -671,17 +694,20 @@ app.put('/api/users/:id', async (req, res) => {
       const name = u.name !== undefined ? u.name : existing.name
       const email = u.email !== undefined ? u.email : existing.email
       const phone = u.phone !== undefined ? u.phone : existing.phone
+      const role = u.role !== undefined ? u.role : existing.role
+      const status = u.status !== undefined ? u.status : existing.status
       const favoritesVal = u.favorites !== undefined ? JSON.stringify(u.favorites) : existing.favorites
 
       await mysqlPool.query(
-        `UPDATE users SET name=?, email=?, phone=?, favorites=? WHERE id=?`,
-        [name, email, phone, favoritesVal, id]
+        `UPDATE users SET name=?, email=?, phone=?, role=?, status=?, favorites=? WHERE id=?`,
+        [name, email, phone, role, status, favoritesVal, id]
       )
       const [[updatedUser]] = await mysqlPool.query('SELECT * FROM users WHERE id=?', [id])
       if (updatedUser) {
         return res.json({
           ...updatedUser,
-          favorites: updatedUser.favorites ? JSON.parse(updatedUser.favorites) : []
+          favorites: updatedUser.favorites ? JSON.parse(updatedUser.favorites) : [],
+          status: updatedUser.status || 'Ativo'
         })
       }
     } catch (e) {

@@ -1,6 +1,33 @@
 {
   "products": [
     {
+      "id": 13,
+      "name": "Vestido MID AURÊ",
+      "brand": "AURÊ",
+      "categoria": "Vestidos",
+      "price": "R$ 299,00",
+      "originalPrice": null,
+      "installments": "10x R$ 29,90",
+      "shape": "M40 10 Q60 5 80 10 L90 60 Q85 120 60 170 Q35 120 30 60 Z",
+      "shapeColor": "#000000",
+      "color": "#342a1d",
+      "color2": "#d4c4b0",
+      "badge": null,
+      "sizes": [
+        "P",
+        "M",
+        "G"
+      ],
+      "colorOptions": [
+        "#342a1d",
+        "#d4c4b0",
+        "#1a1410"
+      ],
+      "rating": 5,
+      "reviews": 1,
+      "marca": "AURÊ"
+    },
+    {
       "id": 1,
       "name": "Vestido Midi Floral Recorte",
       "brand": "Farm Rio",
@@ -380,7 +407,8 @@
       "email": "devteste@gmail.com",
       "phone": "(22) 22222-2222",
       "role": "Cliente",
-      "date": "17/05/2026"
+      "date": "17/05/2026",
+      "status": "Ativo"
     },
     {
       "id": 4,
@@ -388,7 +416,8 @@
       "email": "mariana@example.com",
       "phone": "(11) 99999-9999",
       "role": "Cliente",
-      "date": "17/05/2026"
+      "date": "17/05/2026",
+      "status": "Ativo"
     },
     {
       "id": 1,
@@ -397,15 +426,18 @@
       "phone": "(11) 98765-4321",
       "role": "Administrador",
       "date": "17/05/2026",
-      "password": "admin"
+      "password": "admin",
+      "favorites": [],
+      "status": "Ativo"
     },
     {
       "id": 2,
       "name": "Ana Silva",
       "email": "ana@example.com",
       "phone": "(11) 98888-8888",
-      "role": "Cliente",
-      "date": "16/05/2026"
+      "role": "Estoquista",
+      "date": "16/05/2026",
+      "status": "Ativo"
     },
     {
       "id": 3,
@@ -413,7 +445,8 @@
       "email": "carlos@example.com",
       "phone": "(21) 97777-7777",
       "role": "Cliente",
-      "date": "15/05/2026"
+      "date": "15/05/2026",
+      "status": "Inativo"
     }
   ]
 }

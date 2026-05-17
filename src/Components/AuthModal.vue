@@ -345,13 +345,19 @@ async function handleSubmit() {
     } else {
       const match = users.value.find(u => u.email.toLowerCase() === formData.email.toLowerCase())
       if (match) {
+        if (match.status === 'Inativo') {
+          errorMsg.value = 'Esta conta está inativa. Entre em contato com o suporte.'
+          loading.value = false
+          return
+        }
         currentUser.value = match
       } else {
         const newUser = await addUser({
           name: formData.email.split('@')[0].toUpperCase(),
           email: formData.email,
           phone: '',
-          role: 'Cliente'
+          role: 'Cliente',
+          status: 'Ativo'
         })
         currentUser.value = newUser
       }

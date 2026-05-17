@@ -1,5 +1,5 @@
 <template>
-  <AdminLogin v-if="!currentUser || currentUser.role !== 'Administrador'" />
+  <AdminLogin v-if="!currentUser || (currentUser.role !== 'Administrador' && currentUser.role !== 'Estoquista')" />
   <div v-else class="admin-root">
     
     <!-- SIDEBAR -->
@@ -52,7 +52,7 @@
             </div>
             <div class="profile-info">
               <p class="profile-name">{{ currentUser?.name || 'Elizabeth D.' }}</p>
-              <p class="profile-role">{{ currentUser?.role === 'Administrador' ? 'Administradora' : currentUser?.role || 'Administradora' }}</p>
+              <p class="profile-role">{{ currentUser?.role === 'Administrador' ? 'Administradora' : (currentUser?.role === 'Estoquista' ? 'Estoquista' : currentUser?.role || 'Administradora') }}</p>
             </div>
           </div>
           <button class="logout-admin-btn" @click="handleLogout" title="Sair do Painel">
@@ -230,7 +230,7 @@
         </div>
 
         <!-- 3. USERS PANEL -->
-        <div v-else-if="activeTab === 'users'" class="panel-users anim-fade-in">
+        <div v-else-if="activeTab === 'users' && currentUser?.role === 'Administrador'" class="panel-users anim-fade-in">
           
           <div class="table-actions-row">
             <div class="search-box-wrap">
@@ -245,7 +245,7 @@
               />
             </div>
             
-            <button class="admin-primary-btn" @click="showUserModal = true">
+            <button class="admin-primary-btn" @click="openCreateUser">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
@@ -262,6 +262,7 @@
                   <th>E-mail</th>
                   <th>Telefone</th>
                   <th>Perfil</th>
+                  <th>Status</th>
                   <th>Data de Cadastro</th>
                   <th class="text-right">Ações</th>
                 </tr>
@@ -283,8 +284,24 @@
                       {{ user.role }}
                     </span>
                   </td>
+                  <td>
+                    <span class="status-badge" :class="user.status === 'Inativo' ? 'inativo' : 'ativo'">
+                      {{ user.status || 'Ativo' }}
+                    </span>
+                  </td>
                   <td><span class="text-secondary">{{ user.date }}</span></td>
                   <td class="text-right actions-cell">
+                    <button 
+                      class="table-action-btn edit" 
+                      @click="openEditUser(user)" 
+                      :disabled="user.id === 1 && currentUser?.id !== 1"
+                      title="Editar"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
                     <button 
                       class="table-action-btn delete" 
                       @click="confirmDeleteUser(user)" 
@@ -451,7 +468,7 @@
         <div class="user-modal-card">
           
           <div class="user-modal-header">
-            <h3>Cadastrar Novo Usuário</h3>
+            <h3>{{ editingUser ? 'Editar Usuário' : 'Cadastrar Novo Usuário' }}</h3>
             <button class="drawer-close-btn" @click="showUserModal = false">✕</button>
           </div>
 
@@ -473,15 +490,26 @@
 
             <div class="admin-form-group">
               <label>Perfil de Acesso</label>
-              <select v-model="userForm.role" required>
+              <select v-model="userForm.role" required :disabled="editingUser?.id === 1">
                 <option value="Cliente">Cliente</option>
+                <option value="Estoquista">Estoquista</option>
                 <option value="Administrador">Administrador</option>
+              </select>
+            </div>
+
+            <div v-if="editingUser" class="admin-form-group">
+              <label>Status da Conta</label>
+              <select v-model="userForm.status" required :disabled="editingUser?.id === 1">
+                <option value="Ativo">Ativo</option>
+                <option value="Inativo">Inativo</option>
               </select>
             </div>
 
             <div class="user-modal-footer">
               <button type="button" class="admin-secondary-btn" @click="showUserModal = false">Cancelar</button>
-              <button type="submit" class="admin-primary-btn">Cadastrar</button>
+              <button type="submit" class="admin-primary-btn">
+                {{ editingUser ? 'Salvar Alterações' : 'Cadastrar' }}
+              </button>
             </div>
           </form>
 
@@ -504,7 +532,7 @@
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { products, users, SHAPES, navigateTo, addProduct, updateProduct, deleteProduct, addUser, deleteUser, currentUser, logoutAdmin } from '../store'
+import { products, users, SHAPES, navigateTo, addProduct, updateProduct, deleteProduct, addUser, updateUser, deleteUser, currentUser, logoutAdmin } from '../store'
 import AdminLogin from './AdminLogin.vue'
 
 function handleLogout() {
@@ -516,15 +544,42 @@ const productSearch = ref('')
 const userSearch = ref('')
 const showProductDrawer = ref(false)
 const showUserModal = ref(false)
+const editingUser = ref(null)
+
+function openCreateUser() {
+  editingUser.value = null
+  userForm.name = ''
+  userForm.email = ''
+  userForm.phone = ''
+  userForm.role = 'Cliente'
+  userForm.status = 'Ativo'
+  showUserModal.value = true
+}
+
+function openEditUser(user) {
+  editingUser.value = user
+  userForm.name = user.name
+  userForm.email = user.email
+  userForm.phone = user.phone || ''
+  userForm.role = user.role
+  userForm.status = user.status || 'Ativo'
+  showUserModal.value = true
+}
+
 const editingProduct = ref(null)
 const formLoading = ref(false)
 const adminToast = ref(null)
 
-const tabs = [
-  { id: 'overview', label: 'Painel Geral' },
-  { id: 'products', label: 'Gerenciar Produtos' },
-  { id: 'users', label: 'Gerenciar Usuários' }
-]
+const tabs = computed(() => {
+  const list = [
+    { id: 'overview', label: 'Painel Geral' },
+    { id: 'products', label: 'Gerenciar Produtos' }
+  ]
+  if (currentUser.value?.role === 'Administrador') {
+    list.push({ id: 'users', label: 'Gerenciar Usuários' })
+  }
+  return list
+})
 
 const sizeOptions = ['PP', 'P', 'M', 'G', 'GG', 'XGG', '34', '36', '38', '40', '42', '44']
 
@@ -585,7 +640,8 @@ const userForm = reactive({
   name: '',
   email: '',
   phone: '',
-  role: 'Cliente'
+  role: 'Cliente',
+  status: 'Ativo'
 })
 
 // DRAWER ACTIONS
@@ -699,21 +755,49 @@ async function confirmDeleteProduct(prod) {
 
 // USER ACTIONS
 async function saveUser() {
-  const userPayload = {
+  formLoading.value = true
+  
+  if (editingUser.value) {
+    const updated = await updateUser(editingUser.value.id, {
+      name: userForm.name,
+      email: userForm.email,
+      phone: userForm.phone,
+      role: userForm.role,
+      status: userForm.status
+    })
+    
+    showUserModal.value = false
+    formLoading.value = false
+    
+    if (updated) {
+      showToast('Usuário atualizado com sucesso!')
+      activityLogs.value.unshift({
+        text: `Elizabeth D. atualizou o usuário: ${updated.name}`,
+        time: 'Agora',
+        type: 'user'
+      })
+    }
+    editingUser.value = null
+    return
+  }
+
+  const newUser = await addUser({
     name: userForm.name,
     email: userForm.email,
     phone: userForm.phone,
-    role: userForm.role
-  }
+    role: userForm.role,
+    status: 'Ativo'
+  })
   
-  const newUser = await addUser(userPayload)
   showUserModal.value = false
+  formLoading.value = false
   
   // Reset
   userForm.name = ''
   userForm.email = ''
   userForm.phone = ''
   userForm.role = 'Cliente'
+  userForm.status = 'Ativo'
   
   if (newUser) {
     showToast('Usuário cadastrado com sucesso!')
@@ -1427,9 +1511,33 @@ function goHome() {
   color: #d4b896;
   border: 1px solid rgba(139, 111, 71, 0.3);
 }
+.role-badge.estoquista {
+  background: rgba(74, 144, 226, 0.15);
+  color: #4a90e2;
+  border: 1px solid rgba(74, 144, 226, 0.3);
+}
 .role-badge.cliente {
   background: rgba(255, 255, 255, 0.05);
   color: #a89880;
+}
+
+.status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.status-badge.ativo {
+  background: rgba(46, 117, 89, 0.15);
+  color: #52c49b;
+  border: 1px solid rgba(46, 117, 89, 0.3);
+}
+.status-badge.inativo {
+  background: rgba(220, 100, 100, 0.15);
+  color: #ff9999;
+  border: 1px solid rgba(220, 100, 100, 0.3);
 }
 
 /* ── MODALS AND DRAWERS CSS ── */

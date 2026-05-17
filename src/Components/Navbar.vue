@@ -54,11 +54,26 @@
           <span class="action-label">Conta</span>
         </button>
 
-        <button class="action-btn" aria-label="Favoritos">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button 
+          class="action-btn" 
+          :class="{ active: showOnlyFavorites }" 
+          @click="handleFavoritesClick" 
+          aria-label="Favoritos"
+        >
+          <svg 
+            width="20" 
+            height="20" 
+            viewBox="0 0 24 24" 
+            :fill="showOnlyFavorites ? '#c0714a' : 'none'" 
+            :stroke="showOnlyFavorites ? '#c0714a' : 'currentColor'" 
+            stroke-width="2"
+          >
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
           <span class="action-label">Favoritos</span>
+          <span v-if="currentUser && currentUser.favorites?.length" class="fav-badge">
+            {{ currentUser.favorites.length }}
+          </span>
         </button>
 
         <button class="action-btn cart-btn" @click="cartOpen = !cartOpen" aria-label="Carrinho">
@@ -206,7 +221,15 @@
 import { ref, computed } from 'vue'
 import AuthModal from './AuthModal.vue'
 import ProfileModal from './ProfileModal.vue'
-import { currentUser, cartItems, removeFromCart, clearCart, searchQuery } from '../store'
+import { currentUser, cartItems, removeFromCart, clearCart, searchQuery, showOnlyFavorites } from '../store'
+
+function handleFavoritesClick() {
+  if (!currentUser.value) {
+    accountOpen.value = true
+  } else {
+    showOnlyFavorites.value = !showOnlyFavorites.value
+  }
+}
 const searchOpen = ref(false)
 const searchFocused = ref(false)
 const mobileOpen = ref(false)
@@ -228,24 +251,6 @@ const categories = [
       { title: 'Acessórios', items: ['Bolsas', 'Cintos', 'Chapéus', 'Joias'] },
     ]
   },
-  {
-    label: 'Masculino',
-    sub: [
-      { title: 'Roupas', items: ['Camisetas', 'Camisas', 'Calças', 'Shorts', 'Moletons'] },
-      { title: 'Calçados', items: ['Tênis', 'Sapatos', 'Botas', 'Chinelos'] },
-      { title: 'Acessórios', items: ['Bolsas', 'Cintos', 'Relógios', 'Carteiras'] },
-    ]
-  },
-  {
-    label: 'Infantil',
-    sub: [
-      { title: 'Meninas', items: ['Vestidos', 'Conjuntos', 'Calçados'] },
-      { title: 'Meninos', items: ['Camisetas', 'Shorts', 'Calçados'] },
-    ]
-  },
-  { label: 'Sale 🔥', sub: null },
-  { label: 'Novidades', sub: null },
-  { label: 'Marcas', sub: null },
 ]
 
 const cartCount = computed(() => cartItems.value.length)
@@ -395,6 +400,28 @@ function closeAll() {
   color: #3d2f1e;
   border-radius: 4px;
   transition: all 0.2s;
+  position: relative;
+}
+
+.action-btn.active {
+  color: #c0714a !important;
+}
+
+.fav-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  background: #c0714a;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0;
 }
 .action-btn:hover { background: #f0ece6; color: #8b6f47; }
 .action-label {

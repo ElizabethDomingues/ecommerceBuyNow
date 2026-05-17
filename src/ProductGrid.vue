@@ -114,6 +114,18 @@
       </aside>
 
       <div class="grid-area">
+        <transition name="fade">
+          <div v-if="showOnlyFavorites" class="favorites-banner">
+            <div class="fav-banner-left">
+              <span class="fav-banner-icon">♥</span>
+              <span>Mostrando apenas seus <strong>{{ filteredProducts.length }} itens favoritos</strong></span>
+            </div>
+            <button class="fav-banner-close" @click="showOnlyFavorites = false">
+              Mostrar todos os produtos ×
+            </button>
+          </div>
+        </transition>
+
         <div class="product-grid" :class="`cols-${gridCols}`">
           <article
             v-for="(product, i) in paginatedProducts"
@@ -193,10 +205,12 @@
         </div>
 
         <div v-if="filteredProducts.length === 0" class="empty-state">
-          <p class="empty-icon">◈</p>
-          <p class="empty-title">Nenhum produto encontrado</p>
-          <p class="empty-sub">Tente ajustar os filtros</p>
-          <button class="clear-all" @click="clearFilters">Limpar filtros</button>
+          <p class="empty-icon">{{ showOnlyFavorites ? '♥' : '◈' }}</p>
+          <p class="empty-title">{{ showOnlyFavorites ? 'Sua lista de favoritos está vazia' : 'Nenhum produto encontrado' }}</p>
+          <p class="empty-sub">{{ showOnlyFavorites ? 'Clique no coração nos produtos para salvá-los aqui.' : 'Tente ajustar os filtros' }}</p>
+          <button class="clear-all" @click="showOnlyFavorites ? (showOnlyFavorites = false) : clearFilters()">
+            {{ showOnlyFavorites ? 'Ver Todos os Produtos' : 'Limpar filtros' }}
+          </button>
         </div>
 
         <div v-if="totalPages > 1" class="pagination">
@@ -264,7 +278,7 @@
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { products, SHAPES, addToCart as storeAddToCart, searchQuery, currentUser, updateUser } from './store'
+import { products, SHAPES, addToCart as storeAddToCart, searchQuery, currentUser, updateUser, showOnlyFavorites } from './store'
 
 const gridCols    = ref(3)
 const filtersOpen = ref(true)
@@ -366,6 +380,11 @@ function getColorName(hex) {
 
 const filteredProducts = computed(() => {
   let list = [...products.value]
+
+  if (showOnlyFavorites.value) {
+    const favIds = currentUser.value?.favorites || []
+    list = list.filter(p => favIds.includes(p.id))
+  }
 
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase().trim()
@@ -1182,5 +1201,60 @@ function showToast(msg) {
 .warning-btn-action:hover {
   background: transparent;
   color: #1a1410;
+}
+
+.favorites-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(192, 113, 74, 0.08);
+  border: 1px solid rgba(192, 113, 74, 0.2);
+  border-radius: 4px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: #3d2f1e;
+  font-family: 'DM Sans', sans-serif;
+  animation: slideDown 0.3s ease;
+}
+
+.fav-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fav-banner-icon {
+  color: #c0714a;
+  font-size: 16px;
+}
+
+.fav-banner-close {
+  background: none;
+  border: none;
+  color: #c0714a;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  padding: 4px 8px;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.fav-banner-close:hover {
+  background: rgba(192, 113, 74, 0.1);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
