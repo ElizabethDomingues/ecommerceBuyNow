@@ -133,7 +133,7 @@
           </li>
         </ul>
         <div class="mobile-footer">
-          <a href="#" class="mobile-foot-link">Minha Conta</a>
+          <a href="#" class="mobile-foot-link" @click.prevent="accountOpen = true; mobileOpen = false">Minha Conta</a>
           <a href="#" class="mobile-foot-link">Favoritos</a>
           <a href="#" class="mobile-foot-link">Pedidos</a>
           <a href="#" class="mobile-foot-link">Ajuda</a>
@@ -170,11 +170,14 @@
         </div>
       </div>
     </transition>
+
+    <AuthModal :show="accountOpen" @close="accountOpen = false" />
   </header>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
+import AuthModal from './AuthModal.vue'
 
 const searchQuery = ref('')
 const searchOpen = ref(false)
