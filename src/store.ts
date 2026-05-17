@@ -50,6 +50,7 @@ export const SHAPES = {
 // ── REACTIVE STATES BACKED BY FULLSTACK API ──
 export const products = ref<Product[]>([])
 export const users = ref<User[]>([])
+export const currentUser = ref<User | null>(null)
 
 // ── API CRUD OPERATIONS ──
 
@@ -139,10 +140,34 @@ export async function addUser(payload: Omit<User, 'id' | 'date'>) {
     if (res.ok) {
       const newUser = await res.json()
       users.value.unshift(newUser)
+      currentUser.value = newUser
       return newUser
     }
   } catch (error) {
     console.error('Error adding user to database:', error)
+  }
+}
+
+export async function updateUser(id: number, payload: Partial<Omit<User, 'id' | 'role' | 'date'>>) {
+  try {
+    const res = await fetch(`/api/users/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    if (res.ok) {
+      const updatedUser = await res.json()
+      const index = users.value.findIndex(u => u.id === id)
+      if (index !== -1) {
+        users.value[index] = updatedUser
+      }
+      if (currentUser.value && currentUser.value.id === id) {
+        currentUser.value = updatedUser
+      }
+      return updatedUser
+    }
+  } catch (error) {
+    console.error('Error updating user in database:', error)
   }
 }
 
@@ -153,6 +178,9 @@ export async function deleteUser(id: number) {
     })
     if (res.ok) {
       users.value = users.value.filter(u => u.id !== id)
+      if (currentUser.value && currentUser.value.id === id) {
+        currentUser.value = null
+      }
       return true
     }
   } catch (error) {

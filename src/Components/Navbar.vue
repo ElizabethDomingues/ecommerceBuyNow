@@ -39,7 +39,15 @@
           </svg>
         </button>
 
-        <button class="action-btn" @click="accountOpen = !accountOpen" aria-label="Conta">
+        <button v-if="currentUser" class="action-btn" @click="profileOpen = !profileOpen" aria-label="Perfil">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span class="action-label">Perfil</span>
+        </button>
+
+        <!-- If not logged in: show standard Conta button -->
+        <button v-else class="action-btn" @click="accountOpen = !accountOpen" aria-label="Conta">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
           </svg>
@@ -172,12 +180,15 @@
     </transition>
 
     <AuthModal :show="accountOpen" @close="accountOpen = false" />
+    <ProfileModal :show="profileOpen" @close="profileOpen = false" />
   </header>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import AuthModal from './AuthModal.vue'
+import ProfileModal from './ProfileModal.vue'
+import { currentUser } from '../store'
 
 const searchQuery = ref('')
 const searchOpen = ref(false)
@@ -185,6 +196,7 @@ const searchFocused = ref(false)
 const mobileOpen = ref(false)
 const cartOpen = ref(false)
 const accountOpen = ref(false)
+const profileOpen = ref(false)
 const activeDropdown = ref(null)
 const activeCategory = ref('Feminino')
 const mobileCat = ref(null)

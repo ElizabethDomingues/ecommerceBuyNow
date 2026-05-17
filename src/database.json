@@ -402,6 +402,14 @@
   ],
   "users": [
     {
+      "id": 5,
+      "name": "Dev Teste",
+      "email": "devteste@gmail.com",
+      "phone": "(22) 22222-2222",
+      "role": "Cliente",
+      "date": "17/05/2026"
+    },
+    {
       "id": 4,
       "name": "Mariana Costa",
       "email": "mariana@example.com",
@@ -411,9 +419,9 @@
     },
     {
       "id": 1,
-      "name": "Elizabeth Domingues",
+      "name": "Elizabeth Domingues Ramos",
       "email": "eliza@example.com",
-      "phone": "(11) 99999-9999",
+      "phone": "(11) 98765-4321",
       "role": "Administrador",
       "date": "17/05/2026"
     },

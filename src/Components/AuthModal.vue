@@ -228,7 +228,7 @@
 
 <script setup>
 import { ref, reactive, watch, onMounted, onUnmounted } from 'vue'
-import { addUser } from '../store'
+import { addUser, currentUser, users } from '../store'
 
 const props = defineProps({
   show: {
@@ -342,6 +342,19 @@ async function handleSubmit() {
         phone: formData.phone || '',
         role: 'Cliente'
       })
+    } else {
+      const match = users.value.find(u => u.email.toLowerCase() === formData.email.toLowerCase())
+      if (match) {
+        currentUser.value = match
+      } else {
+        const newUser = await addUser({
+          name: formData.email.split('@')[0].toUpperCase(),
+          email: formData.email,
+          phone: '',
+          role: 'Cliente'
+        })
+        currentUser.value = newUser
+      }
     }
     
     loading.value = false
@@ -352,7 +365,7 @@ async function handleSubmit() {
     }, 2800)
   } catch (err) {
     console.error(err)
-    errorMsg.value = 'Ocorreu um erro ao salvar seu registro no banco de dados.'
+    errorMsg.value = 'Ocorreu um erro ao conectar ao banco de dados.'
     loading.value = false
   }
 }
